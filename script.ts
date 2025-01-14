@@ -9,7 +9,7 @@ function main() {
     }
 
     //variaveis string com o codigo pros shaders do webgl
-    var vertexShaderSource = /*glsl*/ `#version 300 es
+    let vertexShaderSource = /*glsl*/ `#version 300 es
 
     in vec4 a_position;
 
@@ -18,7 +18,7 @@ function main() {
     }
     `
 
-    var fragmentShaderSource = /*glsl*/ `#version 300 es
+    let fragmentShaderSource = /*glsl*/ `#version 300 es
 
     precision highp float;
 
@@ -29,13 +29,12 @@ function main() {
     }
     `
 
-    var program: WebGLProgram
-    var vao: WebGLVertexArrayObject
+    let transferObj = {}
 
-    init(vertexShaderSource, fragmentShaderSource, program, vao)
+    transferObj = init(vertexShaderSource, fragmentShaderSource)
 
     //3 pontos 2d
-    var positions = [
+    let positions = [
         0, 0,
         0, 0.5,
         0.7, 0
@@ -44,19 +43,19 @@ function main() {
     //              aonde colocar   tipo do dado                para otimizacao
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 
-    drawScene(program, vao)
+    drawScene(transferObj)
 }
 
 
 // -------INICIALIZACAO-------
 
-function init(vertexShaderSource: string, fragmentShaderSource: string, program: WebGLProgram, vao: WebGLVertexArrayObject) {
+function init(vertexShaderSource: string, fragmentShaderSource: string) {
     //funcao de criar shader
     function createShader(gl: WebGL2RenderingContext, type, source: string): WebGLShader | null {
-        var shader = gl.createShader(type) // cria um shader no webgl
+        let shader = gl.createShader(type) // cria um shader no webgl
         gl.shaderSource(shader, source) // poe o codigo fonte ndo shader no webgl
         gl.compileShader(shader) // compila
-        var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
+        let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
         if (success) {
             return shader
         }
@@ -66,11 +65,11 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, program:
     }
 
     function createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader) {
-        var program = gl.createProgram() // cria programa
+        let program = gl.createProgram() // cria programa
         gl.attachShader(program, vertexShader) // conecta os shaders com o programa
         gl.attachShader(program, fragmentShader)
         gl.linkProgram(program) // conecta o programa com o webgl
-        var success = gl.getProgramParameter(program, gl.LINK_STATUS)
+        let success = gl.getProgramParameter(program, gl.LINK_STATUS)
         if (success) {
             return program
         }
@@ -80,23 +79,23 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, program:
     }
 
     //cria shaders
-    var vertexShader: WebGLShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
-    var fragmentShader: WebGLShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
+    let vertexShader: WebGLShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
+    let fragmentShader: WebGLShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
 
     //linka com programa
-    program = createProgram(vertexShader, fragmentShader)
+    let program = createProgram(vertexShader, fragmentShader)
 
     //pega posicao do atributo que preciso dar informacao (fazer na inicializacao)
-    var positionAttributeLocation = gl.getAttribLocation(program, 'a_position')
+    let positionAttributeLocation = gl.getAttribLocation(program, 'a_position')
 
     //cria um buffer pro atributo pegar informacoes dele
-    var positionBuffer = gl.createBuffer()
+    let positionBuffer = gl.createBuffer()
 
     //conecta o buffer com  a "variavel global" do webgl, conhecido como bind point
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 
     //cria um objeto vertex array pra tirar dados do buffer
-    vao = gl.createVertexArray()
+    let vao = gl.createVertexArray()
 
     //conecta esse objeto no webgl
     gl.bindVertexArray(vao)
@@ -111,11 +110,16 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, program:
     var stride = 0
     var offset = 0
     gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset)
+
+    return {
+        "program": program,
+        "vertexArrayObject": vao
+    }
 }
 
 // ------- LOOP DE DESENHO -------
 
-function drawScene(program: WebGLProgram, vao: WebGLVertexArrayObject) {
+function drawScene(transferObj) {
     //diz pro webgl que o X e Y do webgl correspondem ao width e height do canvas
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
@@ -124,10 +128,10 @@ function drawScene(program: WebGLProgram, vao: WebGLVertexArrayObject) {
     gl.clear(gl.COLOR_BUFFER_BIT)
 
     //qual programa usar
-    gl.useProgram(program)
+    gl.useProgram(transferObj.program)
 
     //conecta esse objeto no webgl, por algum motivo o tutorial mostra essa linha 2 vezes, não sei se é um erro ou se é pra ser assim mesmo
-    gl.bindVertexArray(vao)
+    gl.bindVertexArray(transferObj.vertexArrayObject)
 
     //desenha o que ta no array
     var primitiveType = gl.TRIANGLES

@@ -10,9 +10,8 @@ function main() {
     //variaveis string com o codigo pros shaders do webgl
     var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec4 a_position;\n\n    void main () {\n        gl_Position = a_position;\n    }\n    ";
     var fragmentShaderSource = /*glsl*/ "#version 300 es\n\n    precision highp float;\n\n    out vec4 outColor;\n\n    void main () {\n        outColor = vec4(1, 0, 0.5, 1);\n    }\n    ";
-    var program;
-    var vao;
-    init(vertexShaderSource, fragmentShaderSource, program, vao);
+    var transferObj = {};
+    transferObj = init(vertexShaderSource, fragmentShaderSource);
     //3 pontos 2d
     var positions = [
         0, 0,
@@ -22,10 +21,10 @@ function main() {
     //coloca a info dos pontos no buffer
     //              aonde colocar   tipo do dado                para otimizacao
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-    drawScene(program, vao);
+    drawScene(transferObj);
 }
 // -------INICIALIZACAO-------
-function init(vertexShaderSource, fragmentShaderSource, program, vao) {
+function init(vertexShaderSource, fragmentShaderSource) {
     //funcao de criar shader
     function createShader(gl, type, source) {
         var shader = gl.createShader(type); // cria um shader no webgl
@@ -54,7 +53,7 @@ function init(vertexShaderSource, fragmentShaderSource, program, vao) {
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
     //linka com programa
-    program = createProgram(vertexShader, fragmentShader);
+    var program = createProgram(vertexShader, fragmentShader);
     //pega posicao do atributo que preciso dar informacao (fazer na inicializacao)
     var positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
     //cria um buffer pro atributo pegar informacoes dele
@@ -62,7 +61,7 @@ function init(vertexShaderSource, fragmentShaderSource, program, vao) {
     //conecta o buffer com  a "variavel global" do webgl, conhecido como bind point
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     //cria um objeto vertex array pra tirar dados do buffer
-    vao = gl.createVertexArray();
+    var vao = gl.createVertexArray();
     //conecta esse objeto no webgl
     gl.bindVertexArray(vao);
     //"liga" o atributo, desligado, possui um valor constante
@@ -74,18 +73,22 @@ function init(vertexShaderSource, fragmentShaderSource, program, vao) {
     var stride = 0;
     var offset = 0;
     gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+    return {
+        "program": program,
+        "vertexArrayObject": vao
+    };
 }
 // ------- LOOP DE DESENHO -------
-function drawScene(program, vao) {
+function drawScene(transferObj) {
     //diz pro webgl que o X e Y do webgl correspondem ao width e height do canvas
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     //limpa o canvas
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     //qual programa usar
-    gl.useProgram(program);
+    gl.useProgram(transferObj.program);
     //conecta esse objeto no webgl, por algum motivo o tutorial mostra essa linha 2 vezes, não sei se é um erro ou se é pra ser assim mesmo
-    gl.bindVertexArray(vao);
+    gl.bindVertexArray(transferObj.vertexArrayObject);
     //desenha o que ta no array
     var primitiveType = gl.TRIANGLES;
     var offset = 0;
