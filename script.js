@@ -1,5 +1,11 @@
 var canvas = document.querySelector('#canv');
 var gl = canvas.getContext('webgl2');
+var webGLVariables;
+var globalVariables = {
+    "count": 0,
+    "translation": [],
+    "color": []
+};
 function main() {
     if (!gl) {
         console.log('sem webgl2');
@@ -9,23 +15,28 @@ function main() {
         console.log('webgl ok');
     }
     //variaveis string com o codigo pros shaders do webgl
-    //uniform vec2 u_tranlation;
-    var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec4 a_position;\n\n    void main () {\n        gl_Position = a_position;\n    }\n    ";
-    var fragmentShaderSource = /*glsl*/ "#version 300 es\n\n    precision highp float;\n\n    out vec4 outColor;\n\n    void main () {\n        outColor = vec4(1, 0, 0.5, 1);\n    }\n    ";
-    var transferObj = {};
-    transferObj = init(vertexShaderSource, fragmentShaderSource);
+    var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec2 a_position;\n\n    uniform vec2 u_translation; // translacao\n\n    uniform vec2 u_resolution; // resolucao do canvas (utilizar apenas pra 2d)\n\n    void main () {\n\n        vec2 position = a_position + u_translation;\n\n        gl_Position = vec4(position, 0, 1);\n    }\n    ";
+    var fragmentShaderSource = /*glsl*/ "#version 300 es\n\n    precision highp float;\n\n    uniform vec4 u_color;\n\n    out vec4 outColor;\n\n    void main () {\n        outColor = u_color;\n    }\n    ";
+    var drawDimensions = 2;
+    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions);
     //3 pontos 2d
     var positions = [
         0, 0,
         0, 0.5,
         0.7, 0
     ];
-    var count = 3;
+    //variavel pra conter a translacao
+    globalVariables.translation = [0, 0];
+    //cor
+    globalVariables.color = [Math.random(), Math.random(), Math.random(), 1];
+    //quantos pontos desenhar (quantas vezes rodar o vertex shader)
+    globalVariables.count = 3;
     setShape(positions);
-    drawScene(transferObj, count);
+    requestAnimationFrame(drawScene);
+    //drawScene()
 }
 // -------INICIALIZACAO-------
-function init(vertexShaderSource, fragmentShaderSource) {
+function init(vertexShaderSource, fragmentShaderSource, drawDimensions) {
     //cria shaders
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
@@ -33,6 +44,10 @@ function init(vertexShaderSource, fragmentShaderSource) {
     var program = createProgram(vertexShader, fragmentShader);
     //pega posicao do atributo que preciso dar informacao (fazer na inicializacao)
     var positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+    //pega as variaveis globais dos shaders
+    var translationLocation = gl.getUniformLocation(program, 'u_translation'); //translacao (o quanto deve se mover)
+    var resolutionLocation = gl.getUniformLocation(program, 'u_resolution'); //resolucao do canvas (utilizar apenas em 2d eu acho)
+    var colorLocation = gl.getUniformLocation(program, 'u_color'); //cor
     //cria um buffer pro atributo pegar informacoes dele
     var positionBuffer = gl.createBuffer();
     //conecta o buffer com  a "variavel global" do webgl, conhecido como bind point
@@ -44,7 +59,9 @@ function init(vertexShaderSource, fragmentShaderSource) {
     //"liga" o atributo, desligado, possui um valor constante
     gl.enableVertexAttribArray(positionAttributeLocation);
     //como tirar os dados do buffer
-    var size = 2;
+    //o size eh quantos elementos utilizar do gl_position, 2 = usar x e y
+    //na pratica diz quantas dimensoes o objeto tera
+    var size = drawDimensions;
     var type = gl.FLOAT;
     var normalize = false;
     var stride = 0;
@@ -52,24 +69,37 @@ function init(vertexShaderSource, fragmentShaderSource) {
     gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
     return {
         "program": program,
-        "vertexArrayObject": vao
+        "vertexArrayObject": vao,
+        "translationLocation": translationLocation,
+        "resolutionLocation": resolutionLocation,
+        "colorLocation": colorLocation,
     };
 }
 // ------- LOOP DE DESENHO -------
-function drawScene(transferObj, count) {
+function drawScene() {
     //diz pro webgl que o X e Y do webgl correspondem ao width e height do canvas
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     //limpa o canvas
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     //qual programa usar
-    gl.useProgram(transferObj.program);
-    //conecta esse objeto no webgl, por algum motivo o tutorial mostra essa linha 2 vezes, não sei se é um erro ou se é pra ser assim mesmo
-    gl.bindVertexArray(transferObj.vertexArrayObject);
+    gl.useProgram(webGLVariables.program);
+    //diz qual vertex array vai ser usado pra retirar informacoes do buffer
+    gl.bindVertexArray(webGLVariables.vertexArrayObject);
+    //na pratica isso deve fazer com que o objeto se mexa na diagonal, pois aumenta o x e o y em 1
+    //a cada vez que desenha
+    globalVariables.translation[0] += 0.5;
+    globalVariables.translation[1] += 0.5;
+    //seta a cor
+    gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color);
+    //seta a translacao
+    gl.uniform2fv(webGLVariables.translationLocation, globalVariables.translation);
+    //seta a resolucao do canvas pra converter de pixels pra clip space (nao utilizado agr)
+    //gl.uniform2f(webGLVariables.resolutionLocation, gl.canvas.width, gl.canvas.height)
     //desenha o que ta no array
     var primitiveType = gl.TRIANGLES;
     var offset = 0;
-    gl.drawArrays(primitiveType, offset, count);
+    gl.drawArrays(primitiveType, offset, globalVariables.count);
 }
 function setShape(positions, x, y, width, height) {
     if (positions === void 0) { positions = []; }
@@ -80,6 +110,8 @@ function setShape(positions, x, y, width, height) {
     //coloca a info dos pontos no buffer
     //              aonde colocar   tipo do dado                para otimizacao
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+}
+function translate(params) {
 }
 //funcao de criar shader
 function createShader(gl, type, source) {
