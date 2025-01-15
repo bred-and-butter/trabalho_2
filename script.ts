@@ -4,11 +4,13 @@ var gl: WebGL2RenderingContext = canvas.getContext('webgl2')
 function main() {
     if (!gl) {
         console.log('sem webgl2')
+        return
     } else {
         console.log('webgl ok')
     }
 
     //variaveis string com o codigo pros shaders do webgl
+    //uniform vec2 u_tranlation;
     let vertexShaderSource = /*glsl*/ `#version 300 es
 
     in vec4 a_position;
@@ -30,7 +32,6 @@ function main() {
     `
 
     let transferObj = {}
-
     transferObj = init(vertexShaderSource, fragmentShaderSource)
 
     //3 pontos 2d
@@ -39,45 +40,16 @@ function main() {
         0, 0.5,
         0.7, 0
     ]
-    //coloca a info dos pontos no buffer
-    //              aonde colocar   tipo do dado                para otimizacao
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
+    let count = 3
 
-    drawScene(transferObj)
+    setShape(positions)
+
+    drawScene(transferObj, count)
 }
 
 
 // -------INICIALIZACAO-------
-
 function init(vertexShaderSource: string, fragmentShaderSource: string) {
-    //funcao de criar shader
-    function createShader(gl: WebGL2RenderingContext, type, source: string): WebGLShader | null {
-        let shader = gl.createShader(type) // cria um shader no webgl
-        gl.shaderSource(shader, source) // poe o codigo fonte ndo shader no webgl
-        gl.compileShader(shader) // compila
-        let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
-        if (success) {
-            return shader
-        }
-
-        console.log(gl.getShaderInfoLog(shader))
-        gl.deleteShader(shader)
-    }
-
-    function createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader) {
-        let program = gl.createProgram() // cria programa
-        gl.attachShader(program, vertexShader) // conecta os shaders com o programa
-        gl.attachShader(program, fragmentShader)
-        gl.linkProgram(program) // conecta o programa com o webgl
-        let success = gl.getProgramParameter(program, gl.LINK_STATUS)
-        if (success) {
-            return program
-        }
-
-        console.log(gl.getProgramInfoLog(program))
-        gl.deleteProgram(program)
-    }
-
     //cria shaders
     let vertexShader: WebGLShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
     let fragmentShader: WebGLShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
@@ -104,11 +76,11 @@ function init(vertexShaderSource: string, fragmentShaderSource: string) {
     gl.enableVertexAttribArray(positionAttributeLocation)
 
     //como tirar os dados do buffer
-    var size = 2
-    var type = gl.FLOAT
-    var normalize = false
-    var stride = 0
-    var offset = 0
+    let size = 2
+    let type = gl.FLOAT
+    let normalize = false
+    let stride = 0
+    let offset = 0
     gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset)
 
     return {
@@ -118,8 +90,7 @@ function init(vertexShaderSource: string, fragmentShaderSource: string) {
 }
 
 // ------- LOOP DE DESENHO -------
-
-function drawScene(transferObj) {
+function drawScene(transferObj, count: number) {
     //diz pro webgl que o X e Y do webgl correspondem ao width e height do canvas
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
@@ -134,10 +105,43 @@ function drawScene(transferObj) {
     gl.bindVertexArray(transferObj.vertexArrayObject)
 
     //desenha o que ta no array
-    var primitiveType = gl.TRIANGLES
-    var offset = 0
-    var count = 3
+    let primitiveType = gl.TRIANGLES
+    let offset = 0
     gl.drawArrays(primitiveType, offset, count)
+}
+
+function setShape(positions = [], x = 0, y = 0, width = 0, height = 0) {
+    //coloca a info dos pontos no buffer
+    //              aonde colocar   tipo do dado                para otimizacao
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
+}
+
+//funcao de criar shader
+function createShader(gl: WebGL2RenderingContext, type, source: string): WebGLShader | null {
+    let shader = gl.createShader(type) // cria um shader no webgl
+    gl.shaderSource(shader, source) // poe o codigo fonte ndo shader no webgl
+    gl.compileShader(shader) // compila
+    let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
+    if (success) {
+        return shader
+    }
+
+    console.log(gl.getShaderInfoLog(shader))
+    gl.deleteShader(shader)
+}
+
+function createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader) {
+    let program = gl.createProgram() // cria programa
+    gl.attachShader(program, vertexShader) // conecta os shaders com o programa
+    gl.attachShader(program, fragmentShader)
+    gl.linkProgram(program) // conecta o programa com o webgl
+    let success = gl.getProgramParameter(program, gl.LINK_STATUS)
+    if (success) {
+        return program
+    }
+
+    console.log(gl.getProgramInfoLog(program))
+    gl.deleteProgram(program)
 }
 
 main()
