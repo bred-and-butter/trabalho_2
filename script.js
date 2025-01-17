@@ -3,8 +3,10 @@ var gl = canvas.getContext('webgl2');
 var webGLVariables;
 var globalVariables = {
     "count": 0,
+    "currentAngle": 0,
     "translation": [],
     "rotation": [],
+    "scale": [],
     "color": []
 };
 function main() {
@@ -16,7 +18,7 @@ function main() {
         console.log('webgl ok');
     }
     //variaveis string com o codigo pros shaders do webgl
-    var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec2 a_position;\n\n    uniform vec2 u_translation; // translacao\n\n    uniform vec2 u_rotation; // rotacao\n\n    uniform vec2 u_resolution; // resolucao do canvas (utilizar apenas pra 2d)\n\n    void main () {\n\n        vec2 rotatedPosition = vec2(\n            a_position.x * u_rotation.y + a_position.y * u_rotation.x,\n            a_position.y * u_rotation.y - a_position.x * u_rotation.x\n        );\n\n        vec2 position = rotatedPosition + u_translation;\n\n        gl_Position = vec4(position, 0, 1);\n    }\n    ";
+    var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec2 a_position;\n\n    uniform vec2 u_resolution; // resolucao do canvas (utilizar apenas pra 2d)\n\n    uniform vec2 u_translation; // translacao\n\n    uniform vec2 u_rotation; // rotacao\n\n    uniform vec2 u_scale; // escala\n\n    void main () {\n\n        vec2 scaledPosition = a_position * u_scale;\n\n        vec2 rotatedPosition = vec2(\n            scaledPosition.x * u_rotation.y + scaledPosition.y * u_rotation.x,\n            scaledPosition.y * u_rotation.y - scaledPosition.x * u_rotation.x\n        );\n\n        vec2 position = rotatedPosition + u_translation;\n\n        gl_Position = vec4(position, 0, 1);\n    }\n    ";
     var fragmentShaderSource = /*glsl*/ "#version 300 es\n\n    precision highp float;\n\n    uniform vec4 u_color;\n\n    out vec4 outColor;\n\n    void main () {\n        outColor = u_color;\n    }\n    ";
     var drawDimensions = 2;
     webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions);
@@ -26,11 +28,13 @@ function main() {
         0, 0.5,
         0.7, 0
     ];
-    //variavel pra conter a translacao
+    //funcao para transladar o objeto
     translate(0, 0);
     //converte o angulo pro seno e cosseno e coloca na variavel
     //seno eh o x, cosseno eh o y
     setRotationWithSineAndCosine(0);
+    //multiplica o x e o y fornecido pra escalar o objeto (nao multiplicar por 0)
+    scale(1, 1);
     //cor
     globalVariables.color = [Math.random(), Math.random(), Math.random(), 1];
     //quantos pontos desenhar (quantas vezes rodar o vertex shader)
@@ -50,7 +54,8 @@ function init(vertexShaderSource, fragmentShaderSource, drawDimensions) {
     var positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
     //pega as variaveis globais dos shaders
     var translationLocation = gl.getUniformLocation(program, 'u_translation'); //translacao (o quanto deve se mover)
-    var rotationLocation = gl.getUniformLocation(program, 'u_rotation');
+    var rotationLocation = gl.getUniformLocation(program, 'u_rotation'); //rotacao
+    var scaleLocation = gl.getUniformLocation(program, 'u_scale'); //escala
     var resolutionLocation = gl.getUniformLocation(program, 'u_resolution'); //resolucao do canvas (utilizar apenas em 2d eu acho)
     var colorLocation = gl.getUniformLocation(program, 'u_color'); //cor
     //cria um buffer pro atributo pegar informacoes dele
@@ -77,6 +82,7 @@ function init(vertexShaderSource, fragmentShaderSource, drawDimensions) {
         "vertexArrayObject": vao,
         "translationLocation": translationLocation,
         "rotationLocation": rotationLocation,
+        "scaleLocation": scaleLocation,
         "resolutionLocation": resolutionLocation,
         "colorLocation": colorLocation,
     };
@@ -102,6 +108,8 @@ function drawScene() {
     gl.uniform2fv(webGLVariables.translationLocation, globalVariables.translation);
     //seta a rotacao
     gl.uniform2fv(webGLVariables.rotationLocation, globalVariables.rotation);
+    //seta a escala
+    gl.uniform2fv(webGLVariables.scaleLocation, globalVariables.scale);
     //seta a resolucao do canvas pra converter de pixels pra clip space (nao utilizado agr)
     //gl.uniform2f(webGLVariables.resolutionLocation, gl.canvas.width, gl.canvas.height)
     //desenha o que ta no array
@@ -124,9 +132,14 @@ function translate(x, y) {
     globalVariables.translation[1] = y;
 }
 function setRotationWithSineAndCosine(angle) {
+    globalVariables.currentAngle = angle;
     var angleInRadians = angle * Math.PI / 180;
     globalVariables.rotation[0] = Math.sin(angleInRadians);
     globalVariables.rotation[1] = Math.cos(angleInRadians);
+}
+function scale(x, y) {
+    globalVariables.scale[0] = x;
+    globalVariables.scale[1] = y;
 }
 //funcao de criar shader
 function createShader(gl, type, source) {
