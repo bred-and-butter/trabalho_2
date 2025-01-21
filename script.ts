@@ -19,70 +19,6 @@ interface globalVariables {
     color: Array<number>
 }
 
-//objeto com funcoes auxiliares pra matrizes 2d
-var m3 = {
-    multiply: function (a: Array<number>, b: Array<number>) {
-        var a00 = a[0 * 3 + 0]
-        var a01 = a[0 * 3 + 1]
-        var a02 = a[0 * 3 + 2]
-        var a10 = a[1 * 3 + 0]
-        var a11 = a[1 * 3 + 1]
-        var a12 = a[1 * 3 + 2]
-        var a20 = a[2 * 3 + 0]
-        var a21 = a[2 * 3 + 1]
-        var a22 = a[2 * 3 + 2]
-        var b00 = b[0 * 3 + 0]
-        var b01 = b[0 * 3 + 1]
-        var b02 = b[0 * 3 + 2]
-        var b10 = b[1 * 3 + 0]
-        var b11 = b[1 * 3 + 1]
-        var b12 = b[1 * 3 + 2]
-        var b20 = b[2 * 3 + 0]
-        var b21 = b[2 * 3 + 1]
-        var b22 = b[2 * 3 + 2]
-
-        return [
-            b00 * a00 + b01 * a10 + b02 * a20,
-            b00 * a01 + b01 * a11 + b02 * a21,
-            b00 * a02 + b01 * a12 + b02 * a22,
-            b10 * a00 + b11 * a10 + b12 * a20,
-            b10 * a01 + b11 * a11 + b12 * a21,
-            b10 * a02 + b11 * a12 + b12 * a22,
-            b20 * a00 + b21 * a10 + b22 * a20,
-            b20 * a01 + b21 * a11 + b22 * a21,
-            b20 * a02 + b21 * a12 + b22 * a22,
-        ]
-    },
-
-    translate: function (x: number, y: number) {
-        return [
-            1, 0, 0,
-            0, 1, 0,
-            x, y, 1
-        ]
-    },
-
-    rotate: function (radians: number) {
-        globalVariables.currentAngleRadians = radians
-        let s = Math.sin(radians)
-        let c = Math.cos(radians)
-
-        return [
-            c, -s, 0,
-            s, c, 0,
-            0, 0, 1
-        ]
-    },
-
-    scale: function (x: number, y: number) {
-        return [
-            x, 0, 0,
-            0, y, 0,
-            0, 0, 1
-        ]
-    }
-}
-
 var webGLVariables: webGLVariables
 var globalVariables: globalVariables = {
     "count": 0,
@@ -107,14 +43,10 @@ function main() {
 
     in vec2 a_position;
 
-    uniform vec2 u_resolution; // resolucao do canvas (utilizar apenas pra 2d)
-
     uniform mat3 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)
 
     void main () {
-        vec2 position = (u_matrix * vec3(a_position, 1)).xy;
-
-        gl_Position = vec4(position, 0, 1);
+        gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
     }
     `
 
@@ -136,13 +68,38 @@ function main() {
 
     //3 pontos 2d
     let positions = [
+        // left column
         0, 0,
-        0, 0.5,
-        0.7, 0
+        30, 0,
+        0, 150,
+        0, 150,
+        30, 0,
+        30, 150,
+
+        // top rung
+        30, 0,
+        100, 0,
+        30, 30,
+        30, 30,
+        100, 0,
+        100, 30,
+
+        // middle rung
+        30, 60,
+        67, 60,
+        30, 90,
+        30, 90,
+        67, 60,
+        67, 90,
     ]
+    /*[
+        0, 0,
+        0, 5,
+        7, 0
+    ]*/
 
     //funcao para transladar o objeto
-    translate('set', 0, 0)
+    translate('set', 150, 150)
 
     //converte o angulo pro seno e cosseno e coloca na variavel
     //seno eh o x, cosseno eh o y
@@ -155,7 +112,7 @@ function main() {
     globalVariables.color = [Math.random(), Math.random(), Math.random(), 1]
 
     //quantos pontos desenhar (quantas vezes rodar o vertex shader)
-    globalVariables.count = 3
+    globalVariables.count = positions.length/drawDimensions
 
     setShape(positions)
 
@@ -218,6 +175,8 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, drawDime
 
 // ------- LOOP DE DESENHO -------
 function drawScene() {
+    resizeCanvasToDisplaySize(gl.canvas)
+
     //diz pro webgl que o X e Y do webgl correspondem ao width e height do canvas
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
 
@@ -248,9 +207,6 @@ function drawScene() {
     //seta a cor
     gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color)
 
-    //seta a resolucao do canvas pra converter de pixels pra clip space (nao utilizado agr)
-    //gl.uniform2f(webGLVariables.resolutionLocation, gl.canvas.width, gl.canvas.height)
-
     //desenha o que ta no array
     let primitiveType = gl.TRIANGLES
     let offset = 0
@@ -264,11 +220,14 @@ function setShape(positions = [], x = 0, y = 0, width = 0, height = 0) {
 }
 
 function multiplyMatrices(): Array<number> {
+    let matrix = []
     let translationMatrix = m3.translate(globalVariables.translation[0], globalVariables.translation[1])
     let rotationMatrix = m3.rotate(globalVariables.currentAngleRadians)
     let scaleMatrix = m3.scale(globalVariables.scale[0], globalVariables.scale[1])
+    let projectionMatrix = m3.projection(gl.canvas.width, gl.canvas.height)
 
-    let matrix = m3.multiply(translationMatrix, rotationMatrix)
+    matrix = m3.multiply(projectionMatrix, translationMatrix)
+    matrix = m3.multiply(matrix, rotationMatrix)
     matrix = m3.multiply(matrix, scaleMatrix)
 
     return matrix
@@ -294,6 +253,104 @@ function convertDegreesToRadians(angle: number) {
 function scale(x: number, y: number) {
     globalVariables.scale[0] = x
     globalVariables.scale[1] = y
+}
+
+//objeto com funcoes auxiliares pra matrizes 2d
+var m3 = {
+    multiply: function (a: Array<number>, b: Array<number>) {
+        var a00 = a[0 * 3 + 0]
+        var a01 = a[0 * 3 + 1]
+        var a02 = a[0 * 3 + 2]
+        var a10 = a[1 * 3 + 0]
+        var a11 = a[1 * 3 + 1]
+        var a12 = a[1 * 3 + 2]
+        var a20 = a[2 * 3 + 0]
+        var a21 = a[2 * 3 + 1]
+        var a22 = a[2 * 3 + 2]
+        var b00 = b[0 * 3 + 0]
+        var b01 = b[0 * 3 + 1]
+        var b02 = b[0 * 3 + 2]
+        var b10 = b[1 * 3 + 0]
+        var b11 = b[1 * 3 + 1]
+        var b12 = b[1 * 3 + 2]
+        var b20 = b[2 * 3 + 0]
+        var b21 = b[2 * 3 + 1]
+        var b22 = b[2 * 3 + 2]
+
+        return [
+            b00 * a00 + b01 * a10 + b02 * a20,
+            b00 * a01 + b01 * a11 + b02 * a21,
+            b00 * a02 + b01 * a12 + b02 * a22,
+            b10 * a00 + b11 * a10 + b12 * a20,
+            b10 * a01 + b11 * a11 + b12 * a21,
+            b10 * a02 + b11 * a12 + b12 * a22,
+            b20 * a00 + b21 * a10 + b22 * a20,
+            b20 * a01 + b21 * a11 + b22 * a21,
+            b20 * a02 + b21 * a12 + b22 * a22,
+        ]
+    },
+
+    identity: function () {
+        return [
+            1, 0, 0,
+            0, 1, 0,
+            0, 0, 1
+        ]
+    },
+
+    projection: function (width: number, height: number) {
+        return [
+            2 / width, 0, 0,
+            0, -2 / height, 0,
+            -1, 1, 1
+        ]
+    },
+
+    translate: function (x: number, y: number) {
+        return [
+            1, 0, 0,
+            0, 1, 0,
+            x, y, 1
+        ]
+    },
+
+    rotate: function (radians: number) {
+        globalVariables.currentAngleRadians = radians
+        let s = Math.sin(radians)
+        let c = Math.cos(radians)
+
+        return [
+            c, -s, 0,
+            s, c, 0,
+            0, 0, 1
+        ]
+    },
+
+    scale: function (x: number, y: number) {
+        return [
+            x, 0, 0,
+            0, y, 0,
+            0, 0, 1
+        ]
+    }
+}
+
+function resizeCanvasToDisplaySize(canvas) {
+    // Lookup the size the browser is displaying the canvas in CSS pixels.
+    const displayWidth = canvas.clientWidth;
+    const displayHeight = canvas.clientHeight;
+
+    // Check if the canvas is not the same size.
+    const needResize = canvas.width !== displayWidth ||
+        canvas.height !== displayHeight;
+
+    if (needResize) {
+        // Make the canvas the same size
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+    }
+
+    return needResize;
 }
 
 //funcao de criar shader
