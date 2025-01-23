@@ -26,35 +26,126 @@ function main() {
     webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions);
     //3 pontos 2d
     var positions = [
-        // left column
+        // left column front
         0, 0, 0,
         30, 0, 0,
         0, 150, 0,
         0, 150, 0,
         30, 0, 0,
         30, 150, 0,
-        // top rung
+        // top rung front
         30, 0, 0,
         100, 0, 0,
         30, 30, 0,
         30, 30, 0,
         100, 0, 0,
         100, 30, 0,
-        // middle rung
+        // middle rung front
         30, 60, 0,
         67, 60, 0,
         30, 90, 0,
         30, 90, 0,
         67, 60, 0,
-        67, 90, 0
+        67, 90, 0,
+        // left column back
+        0, 0, 30,
+        30, 0, 30,
+        0, 150, 30,
+        0, 150, 30,
+        30, 0, 30,
+        30, 150, 30,
+        // top rung back
+        30, 0, 30,
+        100, 0, 30,
+        30, 30, 30,
+        30, 30, 30,
+        100, 0, 30,
+        100, 30, 30,
+        // middle rung back
+        30, 60, 30,
+        67, 60, 30,
+        30, 90, 30,
+        30, 90, 30,
+        67, 60, 30,
+        67, 90, 30,
+        // top
+        0, 0, 0,
+        100, 0, 0,
+        100, 0, 30,
+        0, 0, 0,
+        100, 0, 30,
+        0, 0, 30,
+        // top rung right
+        100, 0, 0,
+        100, 30, 0,
+        100, 30, 30,
+        100, 0, 0,
+        100, 30, 30,
+        100, 0, 30,
+        // under top rung
+        30, 30, 0,
+        30, 30, 30,
+        100, 30, 30,
+        30, 30, 0,
+        100, 30, 30,
+        100, 30, 0,
+        // between top rung and middle
+        30, 30, 0,
+        30, 30, 30,
+        30, 60, 30,
+        30, 30, 0,
+        30, 60, 30,
+        30, 60, 0,
+        // top of middle rung
+        30, 60, 0,
+        30, 60, 30,
+        67, 60, 30,
+        30, 60, 0,
+        67, 60, 30,
+        67, 60, 0,
+        // right of middle rung
+        67, 60, 0,
+        67, 60, 30,
+        67, 90, 30,
+        67, 60, 0,
+        67, 90, 30,
+        67, 90, 0,
+        // bottom of middle rung.
+        30, 90, 0,
+        30, 90, 30,
+        67, 90, 30,
+        30, 90, 0,
+        67, 90, 30,
+        67, 90, 0,
+        // right of bottom
+        30, 90, 0,
+        30, 90, 30,
+        30, 150, 30,
+        30, 90, 0,
+        30, 150, 30,
+        30, 150, 0,
+        // bottom
+        0, 150, 0,
+        0, 150, 30,
+        30, 150, 30,
+        0, 150, 0,
+        30, 150, 30,
+        30, 150, 0,
+        // left side
+        0, 0, 0,
+        0, 0, 30,
+        0, 150, 30,
+        0, 0, 0,
+        0, 150, 30,
+        0, 150, 0,
     ];
     //funcao para transladar o objeto
     translate('set', 300, 150, 0);
     //converte o angulo pro seno e cosseno e coloca na variavel
     //seno eh o x, cosseno eh o y
-    convertDegreesToRadians('x', 0);
-    convertDegreesToRadians('y', 40);
-    convertDegreesToRadians('z', 40);
+    convertDegreesToRadians('set', 'x', 0);
+    convertDegreesToRadians('set', 'y', 40);
+    convertDegreesToRadians('set', 'z', 40);
     //multiplica o x e o y fornecido pra escalar o objeto (nao multiplicar por 0)
     scale(1, 1, 1);
     //cor
@@ -117,6 +208,7 @@ function drawScene() {
     gl.useProgram(webGLVariables.program);
     //diz qual vertex array vai ser usado pra retirar informacoes do buffer
     gl.bindVertexArray(webGLVariables.vertexArrayObject);
+    convertDegreesToRadians('add', 'y', 1);
     //na pratica isso deve fazer com que o objeto se mexa na diagonal, pois aumenta o x e o y em 1
     //a cada vez que desenha
     //globalVariables.translation[0] += 0.5
@@ -134,6 +226,8 @@ function drawScene() {
     var primitiveType = gl.TRIANGLES;
     var offset = 0;
     gl.drawArrays(primitiveType, offset, globalVariables.count);
+    //faz um loop, animando o desenho
+    requestAnimationFrame(drawScene);
 }
 function setShape(positions, x, y, width, height) {
     if (positions === void 0) { positions = []; }
@@ -182,18 +276,39 @@ function translate(mode, x, y, z) {
         console.log('modo incorreto (mode deve ser set ou add)');
     }
 }
-function convertDegreesToRadians(axis, angle) {
-    if (axis == 'x') {
-        globalVariables.rotation[0] = angle * Math.PI / 180;
+function convertDegreesToRadians(mode, axis, angle) {
+    //isso reseta angulos maiores que 360 pra menos de 360, nao sei se vai ser necessario
+    if (globalVariables.rotation[0] >= (360 * Math.PI / 180)) {
+        globalVariables.rotation[0] = globalVariables.rotation[0] - (360 * Math.PI / 180);
     }
-    else if (axis == 'y') {
-        globalVariables.rotation[1] = angle * Math.PI / 180;
+    if (globalVariables.rotation[1] >= (360 * Math.PI / 180)) {
+        globalVariables.rotation[1] = globalVariables.rotation[1] - (360 * Math.PI / 180);
     }
-    else if (axis == 'z') {
-        globalVariables.rotation[2] = angle * Math.PI / 180;
+    if (globalVariables.rotation[2] >= (360 * Math.PI / 180)) {
+        globalVariables.rotation[2] = globalVariables.rotation[2] - (360 * Math.PI / 180);
     }
-    /*globalVariables.currentAngleDegrees = angle
-    globalVariables.currentAngleRadians = angle * Math.PI / 180*/
+    if (mode == 'set') {
+        if (axis == 'x') {
+            globalVariables.rotation[0] = angle * Math.PI / 180;
+        }
+        else if (axis == 'y') {
+            globalVariables.rotation[1] = angle * Math.PI / 180;
+        }
+        else if (axis == 'z') {
+            globalVariables.rotation[2] = angle * Math.PI / 180;
+        }
+    }
+    else if (mode == 'add') {
+        if (axis == 'x') {
+            globalVariables.rotation[0] += angle * Math.PI / 180;
+        }
+        else if (axis == 'y') {
+            globalVariables.rotation[1] += angle * Math.PI / 180;
+        }
+        else if (axis == 'z') {
+            globalVariables.rotation[2] += angle * Math.PI / 180;
+        }
+    }
 }
 function scale(x, y, z) {
     globalVariables.scale[0] = x;
