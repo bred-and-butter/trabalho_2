@@ -15,6 +15,7 @@ interface globalVariables {
     currentAngleRadians: number
     matrix: Array<number>,
     translation: Array<number>,
+    rotation: Array<number>,
     scale: Array<number>,
     color: Array<number>
 }
@@ -26,6 +27,7 @@ var globalVariables: globalVariables = {
     "currentAngleRadians": 0,
     "matrix": [],
     "translation": [],
+    "rotation": [],
     "scale": [],
     "color": []
 }
@@ -41,12 +43,12 @@ function main() {
     //variaveis string com o codigo pros shaders do webgl
     let vertexShaderSource = /*glsl*/ `#version 300 es
 
-    in vec2 a_position;
+    in vec4 a_position;
 
-    uniform mat3 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)
+    uniform mat4 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)
 
     void main () {
-        gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+        gl_Position = u_matrix * a_position;
     }
     `
 
@@ -63,56 +65,54 @@ function main() {
     }
     `
 
-    let drawDimensions = 2
+    let drawDimensions = 3
     webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions)
 
     //3 pontos 2d
     let positions = [
         // left column
-        0, 0,
-        30, 0,
-        0, 150,
-        0, 150,
-        30, 0,
-        30, 150,
+        0, 0, 0,
+        30, 0, 0,
+        0, 150, 0,
+        0, 150, 0,
+        30, 0, 0,
+        30, 150, 0,
 
         // top rung
-        30, 0,
-        100, 0,
-        30, 30,
-        30, 30,
-        100, 0,
-        100, 30,
+        30, 0, 0,
+        100, 0, 0,
+        30, 30, 0,
+        30, 30, 0,
+        100, 0, 0,
+        100, 30, 0,
 
         // middle rung
-        30, 60,
-        67, 60,
-        30, 90,
-        30, 90,
-        67, 60,
-        67, 90,
-    ]
-    /*[
-        0, 0,
-        0, 5,
-        7, 0
-    ]*/
+        30, 60, 0,
+        67, 60, 0,
+        30, 90, 0,
+        30, 90, 0,
+        67, 60, 0,
+        67, 90, 0]
 
     //funcao para transladar o objeto
-    translate('set', 150, 150)
+    translate('set', 300, 150, 0)
 
     //converte o angulo pro seno e cosseno e coloca na variavel
     //seno eh o x, cosseno eh o y
-    convertDegreesToRadians(0)
+    convertDegreesToRadians('x', 0)
+
+    convertDegreesToRadians('y', 40)
+
+    convertDegreesToRadians('z', 40)
 
     //multiplica o x e o y fornecido pra escalar o objeto (nao multiplicar por 0)
-    scale(1, 1)
+    scale(1, 1, 1)
 
     //cor
     globalVariables.color = [Math.random(), Math.random(), Math.random(), 1]
 
     //quantos pontos desenhar (quantas vezes rodar o vertex shader)
-    globalVariables.count = positions.length/drawDimensions
+    globalVariables.count = positions.length / drawDimensions
 
     setShape(positions)
 
@@ -120,7 +120,6 @@ function main() {
 
     //drawScene()
 }
-
 
 // -------INICIALIZACAO-------
 function init(vertexShaderSource: string, fragmentShaderSource: string, drawDimensions: number) {
@@ -202,7 +201,7 @@ function drawScene() {
     let matrix = multiplyMatrices()
 
     //seta matriz de mudancas
-    gl.uniformMatrix3fv(webGLVariables.matrixLocation, false, matrix)
+    gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, matrix)
 
     //seta a cor
     gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color)
@@ -220,7 +219,7 @@ function setShape(positions = [], x = 0, y = 0, width = 0, height = 0) {
 }
 
 function multiplyMatrices(): Array<number> {
-    let matrix = []
+    /*let matrix = []
     let translationMatrix = m3.translate(globalVariables.translation[0], globalVariables.translation[1])
     let rotationMatrix = m3.rotate(globalVariables.currentAngleRadians)
     let scaleMatrix = m3.scale(globalVariables.scale[0], globalVariables.scale[1])
@@ -228,31 +227,198 @@ function multiplyMatrices(): Array<number> {
 
     matrix = m3.multiply(projectionMatrix, translationMatrix)
     matrix = m3.multiply(matrix, rotationMatrix)
-    matrix = m3.multiply(matrix, scaleMatrix)
+    matrix = m3.multiply(matrix, scaleMatrix)*/
+
+    let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400)
+    matrix = m4.translate(matrix, globalVariables.translation[0], globalVariables.translation[1], globalVariables.translation[2])
+    matrix = m4.xRotate(matrix, globalVariables.rotation[0])
+    matrix = m4.yRotate(matrix, globalVariables.rotation[1])
+    matrix = m4.zRotate(matrix, globalVariables.rotation[2])
+    matrix = m4.scale(matrix, globalVariables.scale[0], globalVariables.scale[1], globalVariables.scale[2])
 
     return matrix
 }
 
-function translate(mode: string = 'set', x: number = 0, y: number = 0) {
+function translate(mode: string = 'set', x: number = 0, y: number = 0, z: number = 0) {
     if (mode == 'set') {
         globalVariables.translation[0] = x
         globalVariables.translation[1] = y
+        globalVariables.translation[2] = z
     } else if (mode == 'add') {
         globalVariables.translation[0] += x
         globalVariables.translation[1] += y
+        globalVariables.translation[2] += z
     } else {
         console.log('modo incorreto (mode deve ser set ou add)')
     }
 }
 
-function convertDegreesToRadians(angle: number) {
-    globalVariables.currentAngleDegrees = angle
-    globalVariables.currentAngleRadians = angle * Math.PI / 180
+function convertDegreesToRadians(axis: string, angle: number) {
+    if (axis == 'x') {
+        globalVariables.rotation[0] = angle * Math.PI / 180
+    } else if (axis == 'y') {
+        globalVariables.rotation[1] = angle * Math.PI / 180
+    } else if (axis == 'z') {
+        globalVariables.rotation[2] = angle * Math.PI / 180
+    }
+
+    /*globalVariables.currentAngleDegrees = angle
+    globalVariables.currentAngleRadians = angle * Math.PI / 180*/
 }
 
-function scale(x: number, y: number) {
+function scale(x: number, y: number, z: number) {
     globalVariables.scale[0] = x
     globalVariables.scale[1] = y
+    globalVariables.scale[2] = z
+}
+
+//objeto com funcoes auxiliares pra matrizes 3d
+var m4 = {
+    identity: function () {
+        return [
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        ]
+    },
+
+    projection: function (width: number, height: number, depth: number) {
+        return [
+            2 / width, 0, 0, 0,
+            0, -2 / height, 0, 0,
+            0, 0, 2 / depth, 0,
+            -1, 1, 0, 1
+        ]
+    },
+
+    translate: function (m: Array<number>, x: number, y: number, z: number) {
+        return m4.multiply(m, m4.translationMatrix(x, y, z))
+    },
+
+    translationMatrix: function (x: number, y: number, z: number) {
+        return [
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            x, y, z, 1,
+        ]
+    },
+
+    scale: function (m: Array<number>, x: number, y: number, z: number) {
+        return m4.multiply(m, m4.scalingMatrix(x, y, z))
+    },
+
+    scalingMatrix: function (x: number, y: number, z: number) {
+        return [
+            x, 0, 0, 0,
+            0, y, 0, 0,
+            0, 0, z, 0,
+            0, 0, 0, 1,
+        ]
+    },
+
+    xRotate: function (m: Array<number>, radians: number) {
+        return m4.multiply(m, m4.xRotationMatrix(radians))
+    },
+
+    xRotationMatrix: function (radians: number) {
+        var c = Math.cos(radians)
+        var s = Math.sin(radians)
+
+        return [
+            1, 0, 0, 0,
+            0, c, s, 0,
+            0, -s, c, 0,
+            0, 0, 0, 1,
+        ]
+    },
+
+    yRotate: function (m: Array<number>, radians: number) {
+        return m4.multiply(m, m4.yRotationMatrix(radians))
+    },
+
+    yRotationMatrix: function (radians: number) {
+        var c = Math.cos(radians)
+        var s = Math.sin(radians)
+
+        return [
+            c, 0, -s, 0,
+            0, 1, 0, 0,
+            s, 0, c, 0,
+            0, 0, 0, 1,
+        ]
+    },
+
+    zRotate: function (m: Array<number>, radians: number) {
+        return m4.multiply(m, m4.zRotationMatrix(radians))
+    },
+
+    zRotationMatrix: function (radians: number) {
+        var c = Math.cos(radians)
+        var s = Math.sin(radians)
+
+        return [
+            c, s, 0, 0,
+            -s, c, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        ]
+    },
+
+    multiply: function (a: Array<number>, b: Array<number>) {
+        var b00 = b[0 * 4 + 0];
+        var b01 = b[0 * 4 + 1];
+        var b02 = b[0 * 4 + 2];
+        var b03 = b[0 * 4 + 3];
+        var b10 = b[1 * 4 + 0];
+        var b11 = b[1 * 4 + 1];
+        var b12 = b[1 * 4 + 2];
+        var b13 = b[1 * 4 + 3];
+        var b20 = b[2 * 4 + 0];
+        var b21 = b[2 * 4 + 1];
+        var b22 = b[2 * 4 + 2];
+        var b23 = b[2 * 4 + 3];
+        var b30 = b[3 * 4 + 0];
+        var b31 = b[3 * 4 + 1];
+        var b32 = b[3 * 4 + 2];
+        var b33 = b[3 * 4 + 3];
+        var a00 = a[0 * 4 + 0];
+        var a01 = a[0 * 4 + 1];
+        var a02 = a[0 * 4 + 2];
+        var a03 = a[0 * 4 + 3];
+        var a10 = a[1 * 4 + 0];
+        var a11 = a[1 * 4 + 1];
+        var a12 = a[1 * 4 + 2];
+        var a13 = a[1 * 4 + 3];
+        var a20 = a[2 * 4 + 0];
+        var a21 = a[2 * 4 + 1];
+        var a22 = a[2 * 4 + 2];
+        var a23 = a[2 * 4 + 3];
+        var a30 = a[3 * 4 + 0];
+        var a31 = a[3 * 4 + 1];
+        var a32 = a[3 * 4 + 2];
+        var a33 = a[3 * 4 + 3];
+
+        return [
+            b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30,
+            b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31,
+            b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32,
+            b00 * a03 + b01 * a13 + b02 * a23 + b03 * a33,
+            b10 * a00 + b11 * a10 + b12 * a20 + b13 * a30,
+            b10 * a01 + b11 * a11 + b12 * a21 + b13 * a31,
+            b10 * a02 + b11 * a12 + b12 * a22 + b13 * a32,
+            b10 * a03 + b11 * a13 + b12 * a23 + b13 * a33,
+            b20 * a00 + b21 * a10 + b22 * a20 + b23 * a30,
+            b20 * a01 + b21 * a11 + b22 * a21 + b23 * a31,
+            b20 * a02 + b21 * a12 + b22 * a22 + b23 * a32,
+            b20 * a03 + b21 * a13 + b22 * a23 + b23 * a33,
+            b30 * a00 + b31 * a10 + b32 * a20 + b33 * a30,
+            b30 * a01 + b31 * a11 + b32 * a21 + b33 * a31,
+            b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32,
+            b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33,
+        ];
+    },
 }
 
 //objeto com funcoes auxiliares pra matrizes 2d
