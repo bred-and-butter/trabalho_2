@@ -20,33 +20,32 @@ function main() {
         console.log('webgl ok');
     }
     //variaveis string com o codigo pros shaders do webgl
-    var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec4 a_position;\n\n    uniform mat4 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)\n\n    void main () {\n        gl_Position = u_matrix * a_position;\n    }\n    ";
-    var fragmentShaderSource = /*glsl*/ "#version 300 es\n\n    precision highp float;\n\n    uniform vec4 u_color;\n\n    out vec4 outColor;\n\n    void main () {\n        outColor = u_color;\n    }\n    ";
+    var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec4 a_position;\n    in vec4 a_color;\n\n    uniform mat4 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)\n    \n    out vec4 v_color;\n\n    void main () {\n        gl_Position = u_matrix * a_position;\n\n        v_color = a_color;\n    }\n    ";
+    var fragmentShaderSource = /*glsl*/ "#version 300 es\n\n    precision highp float;\n\n    //uniform vec4 u_color;\n\n    in vec4 v_color;\n\n    out vec4 outColor;\n\n    void main () {\n        outColor = v_color;\n    }\n    ";
     var drawDimensions = 3;
-    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions);
-    //3 pontos 2d
+    //um F 3d
     var positions = [
         // left column front
         0, 0, 0,
-        30, 0, 0,
-        0, 150, 0,
         0, 150, 0,
         30, 0, 0,
+        0, 150, 0,
         30, 150, 0,
+        30, 0, 0,
         // top rung front
         30, 0, 0,
-        100, 0, 0,
-        30, 30, 0,
         30, 30, 0,
         100, 0, 0,
+        30, 30, 0,
         100, 30, 0,
+        100, 0, 0,
         // middle rung front
         30, 60, 0,
-        67, 60, 0,
-        30, 90, 0,
         30, 90, 0,
         67, 60, 0,
+        30, 90, 0,
         67, 90, 0,
+        67, 60, 0,
         // left column back
         0, 0, 30,
         30, 0, 30,
@@ -91,25 +90,25 @@ function main() {
         100, 30, 0,
         // between top rung and middle
         30, 30, 0,
+        30, 60, 30,
         30, 30, 30,
-        30, 60, 30,
         30, 30, 0,
-        30, 60, 30,
         30, 60, 0,
+        30, 60, 30,
         // top of middle rung
         30, 60, 0,
+        67, 60, 30,
         30, 60, 30,
-        67, 60, 30,
         30, 60, 0,
-        67, 60, 30,
         67, 60, 0,
+        67, 60, 30,
         // right of middle rung
         67, 60, 0,
+        67, 90, 30,
         67, 60, 30,
-        67, 90, 30,
         67, 60, 0,
-        67, 90, 30,
         67, 90, 0,
+        67, 90, 30,
         // bottom of middle rung.
         30, 90, 0,
         30, 90, 30,
@@ -119,11 +118,11 @@ function main() {
         67, 90, 0,
         // right of bottom
         30, 90, 0,
+        30, 150, 30,
         30, 90, 30,
-        30, 150, 30,
         30, 90, 0,
-        30, 150, 30,
         30, 150, 0,
+        30, 150, 30,
         // bottom
         0, 150, 0,
         0, 150, 30,
@@ -139,6 +138,121 @@ function main() {
         0, 150, 30,
         0, 150, 0,
     ];
+    var colors = [
+        // left column front
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        // top rung front
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        // middle rung front
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        // left column back
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        // top rung back
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        // middle rung back
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        // top
+        70, 200, 210,
+        70, 200, 210,
+        70, 200, 210,
+        70, 200, 210,
+        70, 200, 210,
+        70, 200, 210,
+        // top rung right
+        200, 200, 70,
+        200, 200, 70,
+        200, 200, 70,
+        200, 200, 70,
+        200, 200, 70,
+        200, 200, 70,
+        // under top rung
+        210, 100, 70,
+        210, 100, 70,
+        210, 100, 70,
+        210, 100, 70,
+        210, 100, 70,
+        210, 100, 70,
+        // between top rung and middle
+        210, 160, 70,
+        210, 160, 70,
+        210, 160, 70,
+        210, 160, 70,
+        210, 160, 70,
+        210, 160, 70,
+        // top of middle rung
+        70, 180, 210,
+        70, 180, 210,
+        70, 180, 210,
+        70, 180, 210,
+        70, 180, 210,
+        70, 180, 210,
+        // right of middle rung
+        100, 70, 210,
+        100, 70, 210,
+        100, 70, 210,
+        100, 70, 210,
+        100, 70, 210,
+        100, 70, 210,
+        // bottom of middle rung.
+        76, 210, 100,
+        76, 210, 100,
+        76, 210, 100,
+        76, 210, 100,
+        76, 210, 100,
+        76, 210, 100,
+        // right of bottom
+        140, 210, 80,
+        140, 210, 80,
+        140, 210, 80,
+        140, 210, 80,
+        140, 210, 80,
+        140, 210, 80,
+        // bottom
+        90, 130, 110,
+        90, 130, 110,
+        90, 130, 110,
+        90, 130, 110,
+        90, 130, 110,
+        90, 130, 110,
+        // left side
+        160, 160, 220,
+        160, 160, 220,
+        160, 160, 220,
+        160, 160, 220,
+        160, 160, 220,
+        160, 160, 220,
+    ];
+    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, positions, colors);
     //funcao para transladar o objeto
     translate('set', 300, 150, 0);
     //converte o angulo pro seno e cosseno e coloca na variavel
@@ -152,12 +266,10 @@ function main() {
     globalVariables.color = [Math.random(), Math.random(), Math.random(), 1];
     //quantos pontos desenhar (quantas vezes rodar o vertex shader)
     globalVariables.count = positions.length / drawDimensions;
-    setShape(positions);
     requestAnimationFrame(drawScene);
-    //drawScene()
 }
 // -------INICIALIZACAO-------
-function init(vertexShaderSource, fragmentShaderSource, drawDimensions) {
+function init(vertexShaderSource, fragmentShaderSource, drawDimensions, positions, colors) {
     //cria shaders
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
@@ -165,6 +277,7 @@ function init(vertexShaderSource, fragmentShaderSource, drawDimensions) {
     var program = createProgram(vertexShader, fragmentShader);
     //pega posicao do atributo que preciso dar informacao (fazer na inicializacao)
     var positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+    var colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
     //pega as variaveis globais dos shaders
     var matrixLocation = gl.getUniformLocation(program, 'u_matrix'); //matriz de mudancas
     var resolutionLocation = gl.getUniformLocation(program, 'u_resolution'); //resolucao do canvas (utilizar apenas em 2d eu acho)
@@ -179,15 +292,26 @@ function init(vertexShaderSource, fragmentShaderSource, drawDimensions) {
     gl.bindVertexArray(vao);
     //"liga" o atributo, desligado, possui um valor constante
     gl.enableVertexAttribArray(positionAttributeLocation);
-    //como tirar os dados do buffer
-    //o size eh quantos elementos utilizar do gl_position, 2 = usar x e y
-    //na pratica diz quantas dimensoes o objeto tera
+    //setShape(positions)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    //faz a mesma coisa mas adicionando informacoes de cores de cada vertice
     var size = drawDimensions;
     var type = gl.FLOAT;
     var normalize = false;
     var stride = 0;
     var offset = 0;
     gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+    var colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    //setColor(colors)
+    gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(colorAttributeLocation);
+    var sizeColor = drawDimensions;
+    var typeColor = gl.UNSIGNED_BYTE;
+    var normalizeColor = true;
+    var strideColor = 0;
+    var offsetColor = 0;
+    gl.vertexAttribPointer(colorAttributeLocation, sizeColor, typeColor, normalizeColor, strideColor, offsetColor);
     return {
         "program": program,
         "vertexArrayObject": vao,
@@ -203,16 +327,14 @@ function drawScene() {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     //limpa o canvas
     gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
     //qual programa usar
     gl.useProgram(webGLVariables.program);
     //diz qual vertex array vai ser usado pra retirar informacoes do buffer
     gl.bindVertexArray(webGLVariables.vertexArrayObject);
     convertDegreesToRadians('add', 'y', 1);
-    //na pratica isso deve fazer com que o objeto se mexa na diagonal, pois aumenta o x e o y em 1
-    //a cada vez que desenha
-    //globalVariables.translation[0] += 0.5
-    //globalVariables.translation[1] += 0.5
     //usa as variaveis globais de translacao rotacao e escala
     //para criar as matrizes de modificacao de pontos
     //e multiplica elas entre si para retornar uma unica matriz
@@ -221,7 +343,7 @@ function drawScene() {
     //seta matriz de mudancas
     gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, matrix);
     //seta a cor
-    gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color);
+    //gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color)
     //desenha o que ta no array
     var primitiveType = gl.TRIANGLES;
     var offset = 0;
@@ -229,26 +351,17 @@ function drawScene() {
     //faz um loop, animando o desenho
     requestAnimationFrame(drawScene);
 }
-function setShape(positions, x, y, width, height) {
-    if (positions === void 0) { positions = []; }
-    if (x === void 0) { x = 0; }
-    if (y === void 0) { y = 0; }
-    if (width === void 0) { width = 0; }
-    if (height === void 0) { height = 0; }
+function setShape(positions) {
     //coloca a info dos pontos no buffer
     //              aonde colocar   tipo do dado                para otimizacao
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 }
+function setColor(color) {
+    //coloca a info dos pontos no buffer
+    //            aonde colocar    tipo do dado           para otimizacao
+    gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(color), gl.STATIC_DRAW);
+}
 function multiplyMatrices() {
-    /*let matrix = []
-    let translationMatrix = m3.translate(globalVariables.translation[0], globalVariables.translation[1])
-    let rotationMatrix = m3.rotate(globalVariables.currentAngleRadians)
-    let scaleMatrix = m3.scale(globalVariables.scale[0], globalVariables.scale[1])
-    let projectionMatrix = m3.projection(gl.canvas.width, gl.canvas.height)
-
-    matrix = m3.multiply(projectionMatrix, translationMatrix)
-    matrix = m3.multiply(matrix, rotationMatrix)
-    matrix = m3.multiply(matrix, scaleMatrix)*/
     var matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400);
     matrix = m4.translate(matrix, globalVariables.translation[0], globalVariables.translation[1], globalVariables.translation[2]);
     matrix = m4.xRotate(matrix, globalVariables.rotation[0]);

@@ -44,11 +44,16 @@ function main() {
     let vertexShaderSource = /*glsl*/ `#version 300 es
 
     in vec4 a_position;
+    in vec4 a_color;
 
     uniform mat4 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)
+    
+    out vec4 v_color;
 
     void main () {
         gl_Position = u_matrix * a_position;
+
+        v_color = a_color;
     }
     `
 
@@ -56,148 +61,280 @@ function main() {
 
     precision highp float;
 
-    uniform vec4 u_color;
+    //uniform vec4 u_color;
+
+    in vec4 v_color;
 
     out vec4 outColor;
 
     void main () {
-        outColor = u_color;
+        outColor = v_color;
     }
     `
 
     let drawDimensions = 3
-    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions)
-
-    //3 pontos 2d
+    //um F 3d
     let positions = [
         // left column front
-        0, 0, 0,
-        30, 0, 0,
-        0, 150, 0,
-        0, 150, 0,
-        30, 0, 0,
-        30, 150, 0,
+        0,   0,  0,
+        0, 150,  0,
+        30,   0,  0,
+        0, 150,  0,
+        30, 150,  0,
+        30,   0,  0,
 
         // top rung front
-        30, 0, 0,
-        100, 0, 0,
-        30, 30, 0,
-        30, 30, 0,
-        100, 0, 0,
-        100, 30, 0,
+        30,   0,  0,
+        30,  30,  0,
+        100,   0,  0,
+        30,  30,  0,
+        100,  30,  0,
+        100,   0,  0,
 
         // middle rung front
-        30, 60, 0,
-        67, 60, 0,
-        30, 90, 0,
-        30, 90, 0,
-        67, 60, 0,
-        67, 90, 0,
+        30,  60,  0,
+        30,  90,  0,
+        67,  60,  0,
+        30,  90,  0,
+        67,  90,  0,
+        67,  60,  0,
 
         // left column back
-        0, 0, 30,
-        30, 0, 30,
-        0, 150, 30,
-        0, 150, 30,
-        30, 0, 30,
-        30, 150, 30,
+          0,   0,  30,
+         30,   0,  30,
+          0, 150,  30,
+          0, 150,  30,
+         30,   0,  30,
+         30, 150,  30,
 
         // top rung back
-        30, 0, 30,
-        100, 0, 30,
-        30, 30, 30,
-        30, 30, 30,
-        100, 0, 30,
-        100, 30, 30,
+         30,   0,  30,
+        100,   0,  30,
+         30,  30,  30,
+         30,  30,  30,
+        100,   0,  30,
+        100,  30,  30,
 
         // middle rung back
-        30, 60, 30,
-        67, 60, 30,
-        30, 90, 30,
-        30, 90, 30,
-        67, 60, 30,
-        67, 90, 30,
+         30,  60,  30,
+         67,  60,  30,
+         30,  90,  30,
+         30,  90,  30,
+         67,  60,  30,
+         67,  90,  30,
 
         // top
-        0, 0, 0,
-        100, 0, 0,
-        100, 0, 30,
-        0, 0, 0,
-        100, 0, 30,
-        0, 0, 30,
+          0,   0,   0,
+        100,   0,   0,
+        100,   0,  30,
+          0,   0,   0,
+        100,   0,  30,
+          0,   0,  30,
 
         // top rung right
-        100, 0, 0,
-        100, 30, 0,
-        100, 30, 30,
-        100, 0, 0,
-        100, 30, 30,
-        100, 0, 30,
+        100,   0,   0,
+        100,  30,   0,
+        100,  30,  30,
+        100,   0,   0,
+        100,  30,  30,
+        100,   0,  30,
 
         // under top rung
-        30, 30, 0,
-        30, 30, 30,
-        100, 30, 30,
-        30, 30, 0,
-        100, 30, 30,
-        100, 30, 0,
+        30,   30,   0,
+        30,   30,  30,
+        100,  30,  30,
+        30,   30,   0,
+        100,  30,  30,
+        100,  30,   0,
 
         // between top rung and middle
-        30, 30, 0,
-        30, 30, 30,
-        30, 60, 30,
-        30, 30, 0,
-        30, 60, 30,
-        30, 60, 0,
+        30,   30,   0,
+        30,   60,  30,
+        30,   30,  30,
+        30,   30,   0,
+        30,   60,   0,
+        30,   60,  30,
 
         // top of middle rung
-        30, 60, 0,
-        30, 60, 30,
-        67, 60, 30,
-        30, 60, 0,
-        67, 60, 30,
-        67, 60, 0,
+        30,   60,   0,
+        67,   60,  30,
+        30,   60,  30,
+        30,   60,   0,
+        67,   60,   0,
+        67,   60,  30,
 
         // right of middle rung
-        67, 60, 0,
-        67, 60, 30,
-        67, 90, 30,
-        67, 60, 0,
-        67, 90, 30,
-        67, 90, 0,
+        67,   60,   0,
+        67,   90,  30,
+        67,   60,  30,
+        67,   60,   0,
+        67,   90,   0,
+        67,   90,  30,
 
         // bottom of middle rung.
-        30, 90, 0,
-        30, 90, 30,
-        67, 90, 30,
-        30, 90, 0,
-        67, 90, 30,
-        67, 90, 0,
+        30,   90,   0,
+        30,   90,  30,
+        67,   90,  30,
+        30,   90,   0,
+        67,   90,  30,
+        67,   90,   0,
 
         // right of bottom
-        30, 90, 0,
-        30, 90, 30,
-        30, 150, 30,
-        30, 90, 0,
-        30, 150, 30,
-        30, 150, 0,
+        30,   90,   0,
+        30,  150,  30,
+        30,   90,  30,
+        30,   90,   0,
+        30,  150,   0,
+        30,  150,  30,
 
         // bottom
-        0, 150, 0,
-        0, 150, 30,
-        30, 150, 30,
-        0, 150, 0,
-        30, 150, 30,
-        30, 150, 0,
+        0,   150,   0,
+        0,   150,  30,
+        30,  150,  30,
+        0,   150,   0,
+        30,  150,  30,
+        30,  150,   0,
 
         // left side
-        0, 0, 0,
-        0, 0, 30,
-        0, 150, 30,
-        0, 0, 0,
-        0, 150, 30,
-        0, 150, 0,
+        0,   0,   0,
+        0,   0,  30,
+        0, 150,  30,
+        0,   0,   0,
+        0, 150,  30,
+        0, 150,   0,
     ]
+
+    let colors = [
+        // left column front
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+
+        // top rung front
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+
+        // middle rung front
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+        200, 70, 120,
+
+        // left column back
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+
+        // top rung back
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+
+        // middle rung back
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+        80, 70, 200,
+
+        // top
+        70, 200, 210,
+        70, 200, 210,
+        70, 200, 210,
+        70, 200, 210,
+        70, 200, 210,
+        70, 200, 210,
+
+        // top rung right
+        200, 200, 70,
+        200, 200, 70,
+        200, 200, 70,
+        200, 200, 70,
+        200, 200, 70,
+        200, 200, 70,
+
+        // under top rung
+        210, 100, 70,
+        210, 100, 70,
+        210, 100, 70,
+        210, 100, 70,
+        210, 100, 70,
+        210, 100, 70,
+
+        // between top rung and middle
+        210, 160, 70,
+        210, 160, 70,
+        210, 160, 70,
+        210, 160, 70,
+        210, 160, 70,
+        210, 160, 70,
+
+        // top of middle rung
+        70, 180, 210,
+        70, 180, 210,
+        70, 180, 210,
+        70, 180, 210,
+        70, 180, 210,
+        70, 180, 210,
+
+        // right of middle rung
+        100, 70, 210,
+        100, 70, 210,
+        100, 70, 210,
+        100, 70, 210,
+        100, 70, 210,
+        100, 70, 210,
+
+        // bottom of middle rung.
+        76, 210, 100,
+        76, 210, 100,
+        76, 210, 100,
+        76, 210, 100,
+        76, 210, 100,
+        76, 210, 100,
+
+        // right of bottom
+        140, 210, 80,
+        140, 210, 80,
+        140, 210, 80,
+        140, 210, 80,
+        140, 210, 80,
+        140, 210, 80,
+
+        // bottom
+        90, 130, 110,
+        90, 130, 110,
+        90, 130, 110,
+        90, 130, 110,
+        90, 130, 110,
+        90, 130, 110,
+
+        // left side
+        160, 160, 220,
+        160, 160, 220,
+        160, 160, 220,
+        160, 160, 220,
+        160, 160, 220,
+        160, 160, 220,
+    ]
+
+    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, positions, colors)
 
     //funcao para transladar o objeto
     translate('set', 300, 150, 0)
@@ -205,9 +342,7 @@ function main() {
     //converte o angulo pro seno e cosseno e coloca na variavel
     //seno eh o x, cosseno eh o y
     convertDegreesToRadians('set', 'x', 0)
-
     convertDegreesToRadians('set', 'y', 40)
-
     convertDegreesToRadians('set', 'z', 40)
 
     //multiplica o x e o y fornecido pra escalar o objeto (nao multiplicar por 0)
@@ -219,15 +354,11 @@ function main() {
     //quantos pontos desenhar (quantas vezes rodar o vertex shader)
     globalVariables.count = positions.length / drawDimensions
 
-    setShape(positions)
-
     requestAnimationFrame(drawScene)
-
-    //drawScene()
 }
 
 // -------INICIALIZACAO-------
-function init(vertexShaderSource: string, fragmentShaderSource: string, drawDimensions: number) {
+function init(vertexShaderSource: string, fragmentShaderSource: string, drawDimensions: number, positions: Array<number>, colors: Array<number>) {
     //cria shaders
     let vertexShader: WebGLShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
     let fragmentShader: WebGLShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
@@ -237,6 +368,7 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, drawDime
 
     //pega posicao do atributo que preciso dar informacao (fazer na inicializacao)
     let positionAttributeLocation = gl.getAttribLocation(program, 'a_position')
+    let colorAttributeLocation = gl.getAttribLocation(program, 'a_color')
 
     //pega as variaveis globais dos shaders
     let matrixLocation = gl.getUniformLocation(program, 'u_matrix') //matriz de mudancas
@@ -258,15 +390,30 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, drawDime
     //"liga" o atributo, desligado, possui um valor constante
     gl.enableVertexAttribArray(positionAttributeLocation)
 
-    //como tirar os dados do buffer
-    //o size eh quantos elementos utilizar do gl_position, 2 = usar x e y
-    //na pratica diz quantas dimensoes o objeto tera
+    //setShape(positions)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
+
+    //faz a mesma coisa mas adicionando informacoes de cores de cada vertice
     let size = drawDimensions
     let type = gl.FLOAT
     let normalize = false
     let stride = 0
     let offset = 0
     gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset)
+
+    let colorBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+    //setColor(colors)
+    gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW)
+
+    gl.enableVertexAttribArray(colorAttributeLocation)
+
+    let sizeColor = drawDimensions
+    let typeColor = gl.UNSIGNED_BYTE
+    let normalizeColor = true
+    let strideColor = 0
+    let offsetColor = 0
+    gl.vertexAttribPointer(colorAttributeLocation, sizeColor, typeColor, normalizeColor, strideColor, offsetColor)
 
     return {
         "program": program,
@@ -286,7 +433,10 @@ function drawScene() {
 
     //limpa o canvas
     gl.clearColor(0, 0, 0, 0)
-    gl.clear(gl.COLOR_BUFFER_BIT)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    
+    gl.enable(gl.DEPTH_TEST)
+    gl.enable(gl.CULL_FACE)
 
     //qual programa usar
     gl.useProgram(webGLVariables.program)
@@ -295,11 +445,6 @@ function drawScene() {
     gl.bindVertexArray(webGLVariables.vertexArrayObject)
 
     convertDegreesToRadians('add', 'y', 1)
-
-    //na pratica isso deve fazer com que o objeto se mexa na diagonal, pois aumenta o x e o y em 1
-    //a cada vez que desenha
-    //globalVariables.translation[0] += 0.5
-    //globalVariables.translation[1] += 0.5
 
     //usa as variaveis globais de translacao rotacao e escala
     //para criar as matrizes de modificacao de pontos
@@ -311,7 +456,7 @@ function drawScene() {
     gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, matrix)
 
     //seta a cor
-    gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color)
+    //gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color)
 
     //desenha o que ta no array
     let primitiveType = gl.TRIANGLES
@@ -322,23 +467,19 @@ function drawScene() {
     requestAnimationFrame(drawScene)
 }
 
-function setShape(positions = [], x = 0, y = 0, width = 0, height = 0) {
+function setShape(positions: Array<number>) {
     //coloca a info dos pontos no buffer
     //              aonde colocar   tipo do dado                para otimizacao
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 }
 
+function setColor(color: Array<number>) {
+    //coloca a info dos pontos no buffer
+    //            aonde colocar    tipo do dado           para otimizacao
+    gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(color), gl.STATIC_DRAW)
+}
+
 function multiplyMatrices(): Array<number> {
-    /*let matrix = []
-    let translationMatrix = m3.translate(globalVariables.translation[0], globalVariables.translation[1])
-    let rotationMatrix = m3.rotate(globalVariables.currentAngleRadians)
-    let scaleMatrix = m3.scale(globalVariables.scale[0], globalVariables.scale[1])
-    let projectionMatrix = m3.projection(gl.canvas.width, gl.canvas.height)
-
-    matrix = m3.multiply(projectionMatrix, translationMatrix)
-    matrix = m3.multiply(matrix, rotationMatrix)
-    matrix = m3.multiply(matrix, scaleMatrix)*/
-
     let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400)
     matrix = m4.translate(matrix, globalVariables.translation[0], globalVariables.translation[1], globalVariables.translation[2])
     matrix = m4.xRotate(matrix, globalVariables.rotation[0])
