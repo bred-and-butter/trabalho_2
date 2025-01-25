@@ -362,7 +362,14 @@ function setColor(color) {
     gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(color), gl.STATIC_DRAW);
 }
 function multiplyMatrices() {
-    var matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400);
+    var left = 0;
+    var right = gl.canvas.width;
+    var bottom = gl.canvas.height;
+    var top = 0;
+    var near = 400;
+    var far = -400;
+    //let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400)
+    var matrix = m4.orthographic(left, right, bottom, top, near, far);
     matrix = m4.translate(matrix, globalVariables.translation[0], globalVariables.translation[1], globalVariables.translation[2]);
     matrix = m4.xRotate(matrix, globalVariables.rotation[0]);
     matrix = m4.yRotate(matrix, globalVariables.rotation[1]);
@@ -444,6 +451,17 @@ var m4 = {
             0, -2 / height, 0, 0,
             0, 0, 2 / depth, 0,
             -1, 1, 0, 1
+        ];
+    },
+    orthographic: function (left, right, bottom, top, near, far) {
+        return [
+            2 / (right - left), 0, 0, 0,
+            0, 2 / (top - bottom), 0, 0,
+            0, 0, 2 / (near - far), 0,
+            (left + right) / (left - right),
+            (bottom + top) / (bottom - top),
+            (near + far) / (near - far),
+            1
         ];
     },
     translate: function (m, x, y, z) {

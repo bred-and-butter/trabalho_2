@@ -76,132 +76,132 @@ function main() {
     //um F 3d
     let positions = [
         // left column front
-        0,   0,  0,
-        0, 150,  0,
-        30,   0,  0,
-        0, 150,  0,
-        30, 150,  0,
-        30,   0,  0,
+        0, 0, 0,
+        0, 150, 0,
+        30, 0, 0,
+        0, 150, 0,
+        30, 150, 0,
+        30, 0, 0,
 
         // top rung front
-        30,   0,  0,
-        30,  30,  0,
-        100,   0,  0,
-        30,  30,  0,
-        100,  30,  0,
-        100,   0,  0,
+        30, 0, 0,
+        30, 30, 0,
+        100, 0, 0,
+        30, 30, 0,
+        100, 30, 0,
+        100, 0, 0,
 
         // middle rung front
-        30,  60,  0,
-        30,  90,  0,
-        67,  60,  0,
-        30,  90,  0,
-        67,  90,  0,
-        67,  60,  0,
+        30, 60, 0,
+        30, 90, 0,
+        67, 60, 0,
+        30, 90, 0,
+        67, 90, 0,
+        67, 60, 0,
 
         // left column back
-          0,   0,  30,
-         30,   0,  30,
-          0, 150,  30,
-          0, 150,  30,
-         30,   0,  30,
-         30, 150,  30,
+        0, 0, 30,
+        30, 0, 30,
+        0, 150, 30,
+        0, 150, 30,
+        30, 0, 30,
+        30, 150, 30,
 
         // top rung back
-         30,   0,  30,
-        100,   0,  30,
-         30,  30,  30,
-         30,  30,  30,
-        100,   0,  30,
-        100,  30,  30,
+        30, 0, 30,
+        100, 0, 30,
+        30, 30, 30,
+        30, 30, 30,
+        100, 0, 30,
+        100, 30, 30,
 
         // middle rung back
-         30,  60,  30,
-         67,  60,  30,
-         30,  90,  30,
-         30,  90,  30,
-         67,  60,  30,
-         67,  90,  30,
+        30, 60, 30,
+        67, 60, 30,
+        30, 90, 30,
+        30, 90, 30,
+        67, 60, 30,
+        67, 90, 30,
 
         // top
-          0,   0,   0,
-        100,   0,   0,
-        100,   0,  30,
-          0,   0,   0,
-        100,   0,  30,
-          0,   0,  30,
+        0, 0, 0,
+        100, 0, 0,
+        100, 0, 30,
+        0, 0, 0,
+        100, 0, 30,
+        0, 0, 30,
 
         // top rung right
-        100,   0,   0,
-        100,  30,   0,
-        100,  30,  30,
-        100,   0,   0,
-        100,  30,  30,
-        100,   0,  30,
+        100, 0, 0,
+        100, 30, 0,
+        100, 30, 30,
+        100, 0, 0,
+        100, 30, 30,
+        100, 0, 30,
 
         // under top rung
-        30,   30,   0,
-        30,   30,  30,
-        100,  30,  30,
-        30,   30,   0,
-        100,  30,  30,
-        100,  30,   0,
+        30, 30, 0,
+        30, 30, 30,
+        100, 30, 30,
+        30, 30, 0,
+        100, 30, 30,
+        100, 30, 0,
 
         // between top rung and middle
-        30,   30,   0,
-        30,   60,  30,
-        30,   30,  30,
-        30,   30,   0,
-        30,   60,   0,
-        30,   60,  30,
+        30, 30, 0,
+        30, 60, 30,
+        30, 30, 30,
+        30, 30, 0,
+        30, 60, 0,
+        30, 60, 30,
 
         // top of middle rung
-        30,   60,   0,
-        67,   60,  30,
-        30,   60,  30,
-        30,   60,   0,
-        67,   60,   0,
-        67,   60,  30,
+        30, 60, 0,
+        67, 60, 30,
+        30, 60, 30,
+        30, 60, 0,
+        67, 60, 0,
+        67, 60, 30,
 
         // right of middle rung
-        67,   60,   0,
-        67,   90,  30,
-        67,   60,  30,
-        67,   60,   0,
-        67,   90,   0,
-        67,   90,  30,
+        67, 60, 0,
+        67, 90, 30,
+        67, 60, 30,
+        67, 60, 0,
+        67, 90, 0,
+        67, 90, 30,
 
         // bottom of middle rung.
-        30,   90,   0,
-        30,   90,  30,
-        67,   90,  30,
-        30,   90,   0,
-        67,   90,  30,
-        67,   90,   0,
+        30, 90, 0,
+        30, 90, 30,
+        67, 90, 30,
+        30, 90, 0,
+        67, 90, 30,
+        67, 90, 0,
 
         // right of bottom
-        30,   90,   0,
-        30,  150,  30,
-        30,   90,  30,
-        30,   90,   0,
-        30,  150,   0,
-        30,  150,  30,
+        30, 90, 0,
+        30, 150, 30,
+        30, 90, 30,
+        30, 90, 0,
+        30, 150, 0,
+        30, 150, 30,
 
         // bottom
-        0,   150,   0,
-        0,   150,  30,
-        30,  150,  30,
-        0,   150,   0,
-        30,  150,  30,
-        30,  150,   0,
+        0, 150, 0,
+        0, 150, 30,
+        30, 150, 30,
+        0, 150, 0,
+        30, 150, 30,
+        30, 150, 0,
 
         // left side
-        0,   0,   0,
-        0,   0,  30,
-        0, 150,  30,
-        0,   0,   0,
-        0, 150,  30,
-        0, 150,   0,
+        0, 0, 0,
+        0, 0, 30,
+        0, 150, 30,
+        0, 0, 0,
+        0, 150, 30,
+        0, 150, 0,
     ]
 
     let colors = [
@@ -434,7 +434,7 @@ function drawScene() {
     //limpa o canvas
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-    
+
     gl.enable(gl.DEPTH_TEST)
     gl.enable(gl.CULL_FACE)
 
@@ -480,7 +480,15 @@ function setColor(color: Array<number>) {
 }
 
 function multiplyMatrices(): Array<number> {
-    let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400)
+    let left = 0
+    let right = gl.canvas.width
+    let bottom = gl.canvas.height
+    let top = 0
+    let near = 400
+    let far = -400
+
+    //let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400)
+    let matrix = m4.orthographic(left, right, bottom, top, near, far)
     matrix = m4.translate(matrix, globalVariables.translation[0], globalVariables.translation[1], globalVariables.translation[2])
     matrix = m4.xRotate(matrix, globalVariables.rotation[0])
     matrix = m4.yRotate(matrix, globalVariables.rotation[1])
@@ -558,6 +566,19 @@ var m4 = {
             0, -2 / height, 0, 0,
             0, 0, 2 / depth, 0,
             -1, 1, 0, 1
+        ]
+    },
+
+    orthographic: function (left: number, right: number, bottom: number, top: number, near: number, far: number) {
+        return [
+            2 / (right - left), 0, 0, 0,
+            0, 2 / (top - bottom), 0, 0,
+            0, 0, 2 / (near - far), 0,
+
+            (left + right) / (left - right),
+            (bottom + top) / (bottom - top),
+            (near + far) / (near - far),
+            1
         ]
     },
 
