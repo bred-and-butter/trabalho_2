@@ -5,12 +5,14 @@ interface webGLVariables {
     program: WebGLProgram,
     vertexArrayObject: WebGLVertexArrayObject,
     matrixLocation: WebGLUniformLocation,
+    fudgeLocation: WebGLUniformLocation,
     resolutionLocation: WebGLUniformLocation,
     colorLocation: WebGLUniformLocation,
 }
 
 interface globalVariables {
     count: number,
+    fudgeFactor: number,
     currentAngleDegrees: number,
     currentAngleRadians: number
     matrix: Array<number>,
@@ -23,6 +25,7 @@ interface globalVariables {
 var webGLVariables: webGLVariables
 var globalVariables: globalVariables = {
     "count": 0,
+    "fudgeFactor": 2,
     "currentAngleDegrees": 0,
     "currentAngleRadians": 0,
     "matrix": [],
@@ -47,11 +50,16 @@ function main() {
     in vec4 a_color;
 
     uniform mat4 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)
+    uniform float u_fudgeFactor;
     
     out vec4 v_color;
 
     void main () {
-        gl_Position = u_matrix * a_position;
+        vec4 position = u_matrix * a_position;
+
+        float zToDivideBy = 1.0 + position.z * u_fudgeFactor;
+
+        gl_Position = vec4(position.xy / zToDivideBy, position.zw);
 
         v_color = a_color;
     }
@@ -372,6 +380,7 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, drawDime
 
     //pega as variaveis globais dos shaders
     let matrixLocation = gl.getUniformLocation(program, 'u_matrix') //matriz de mudancas
+    let fudgeLocation = gl.getUniformLocation(program, 'u_fudgeFactor')
     let resolutionLocation = gl.getUniformLocation(program, 'u_resolution') //resolucao do canvas (utilizar apenas em 2d eu acho)
     let colorLocation = gl.getUniformLocation(program, 'u_color') //cor
 
@@ -419,6 +428,7 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, drawDime
         "program": program,
         "vertexArrayObject": vao,
         "matrixLocation": matrixLocation,
+        "fudgeLocation": fudgeLocation,
         "resolutionLocation": resolutionLocation,
         "colorLocation": colorLocation,
     }
@@ -454,6 +464,8 @@ function drawScene() {
 
     //seta matriz de mudancas
     gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, matrix)
+
+    gl.uniform1f(webGLVariables.fudgeLocation, globalVariables.fudgeFactor)
 
     //seta a cor
     //gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color)
