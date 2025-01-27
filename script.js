@@ -3,7 +3,7 @@ var gl = canvas.getContext('webgl2');
 var webGLVariables;
 var globalVariables = {
     "count": 0,
-    "fudgeFactor": 2,
+    "FOVRadians": 2,
     "currentAngleDegrees": 0,
     "currentAngleRadians": 0,
     "matrix": [],
@@ -21,7 +21,7 @@ function main() {
         console.log('webgl ok');
     }
     //variaveis string com o codigo pros shaders do webgl
-    var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec4 a_position;\n    in vec4 a_color;\n\n    uniform mat4 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)\n    uniform float u_fudgeFactor;\n    \n    out vec4 v_color;\n\n    void main () {\n        vec4 position = u_matrix * a_position;\n\n        float zToDivideBy = 1.0 + position.z * u_fudgeFactor;\n\n        gl_Position = vec4(position.xy / zToDivideBy, position.zw);\n\n        v_color = a_color;\n    }\n    ";
+    var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec4 a_position;\n    in vec4 a_color;\n\n    uniform mat4 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)\n    \n    out vec4 v_color;\n\n    void main () {\n        gl_Position = u_matrix * a_position;\n\n        v_color = a_color;\n    }\n    ";
     var fragmentShaderSource = /*glsl*/ "#version 300 es\n\n    precision highp float;\n\n    //uniform vec4 u_color;\n\n    in vec4 v_color;\n\n    out vec4 outColor;\n\n    void main () {\n        outColor = v_color;\n    }\n    ";
     var drawDimensions = 3;
     //um F 3d
@@ -255,7 +255,7 @@ function main() {
     ];
     webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, positions, colors);
     //funcao para transladar o objeto
-    translate('set', 300, 150, 0);
+    translate('set', -150, 0, -300);
     //converte o angulo pro seno e cosseno e coloca na variavel
     //seno eh o x, cosseno eh o y
     convertDegreesToRadians('set', 'x', 0);
@@ -281,7 +281,6 @@ function init(vertexShaderSource, fragmentShaderSource, drawDimensions, position
     var colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
     //pega as variaveis globais dos shaders
     var matrixLocation = gl.getUniformLocation(program, 'u_matrix'); //matriz de mudancas
-    var fudgeLocation = gl.getUniformLocation(program, 'u_fudgeFactor');
     var resolutionLocation = gl.getUniformLocation(program, 'u_resolution'); //resolucao do canvas (utilizar apenas em 2d eu acho)
     var colorLocation = gl.getUniformLocation(program, 'u_color'); //cor
     //cria um buffer pro atributo pegar informacoes dele
@@ -318,7 +317,6 @@ function init(vertexShaderSource, fragmentShaderSource, drawDimensions, position
         "program": program,
         "vertexArrayObject": vao,
         "matrixLocation": matrixLocation,
-        "fudgeLocation": fudgeLocation,
         "resolutionLocation": resolutionLocation,
         "colorLocation": colorLocation,
     };
@@ -345,7 +343,6 @@ function drawScene() {
     var matrix = multiplyMatrices();
     //seta matriz de mudancas
     gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, matrix);
-    gl.uniform1f(webGLVariables.fudgeLocation, globalVariables.fudgeFactor);
     //seta a cor
     //gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color)
     //desenha o que ta no array
@@ -365,15 +362,23 @@ function setColor(color) {
     //            aonde colocar    tipo do dado           para otimizacao
     gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(color), gl.STATIC_DRAW);
 }
+function updateFOV(degrees) {
+    globalVariables.FOVRadians = degrees * Math.PI / 180;
+}
 function multiplyMatrices() {
-    var left = 0;
-    var right = gl.canvas.width;
-    var bottom = gl.canvas.height;
-    var top = 0;
-    var near = 400;
-    var far = -400;
+    var aspect = gl.canvas.width / gl.canvas.height;
+    var zNear = 1;
+    var zFar = 2000;
+    /*let left = 0
+    let right = gl.canvas.width
+    let bottom = gl.canvas.height
+    let top = 0
+    let near = 400
+    let far = -400
+
     //let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400)
-    var matrix = m4.orthographic(left, right, bottom, top, near, far);
+    let matrix = m4.orthographic(left, right, bottom, top, near, far)*/
+    var matrix = m4.perspective(globalVariables.FOVRadians, aspect, zNear, zFar);
     matrix = m4.translate(matrix, globalVariables.translation[0], globalVariables.translation[1], globalVariables.translation[2]);
     matrix = m4.xRotate(matrix, globalVariables.rotation[0]);
     matrix = m4.yRotate(matrix, globalVariables.rotation[1]);
@@ -452,7 +457,7 @@ var m4 = {
     projection: function (width, height, depth) {
         return [
             2 / width, 0, 0, 0,
-            0, -2 / height, 0, 0,
+            0, -2 / height, 0, 0, //esse "-" faz com que o eixo Y fique invertido
             0, 0, 2 / depth, 0,
             -1, 1, 0, 1
         ];
@@ -466,6 +471,16 @@ var m4 = {
             (bottom + top) / (bottom - top),
             (near + far) / (near - far),
             1
+        ];
+    },
+    perspective: function (FOVRadians, aspect, near, far) {
+        var f = Math.tan(Math.PI * 0.5 - 0.5 * FOVRadians);
+        var rangeInv = 1.0 / (near - far);
+        return [
+            f / aspect, 0, 0, 0,
+            0, f, 0, 0,
+            0, 0, (near + far) * rangeInv, -1,
+            0, 0, near * far * rangeInv * 2, 0
         ];
     },
     translate: function (m, x, y, z) {
