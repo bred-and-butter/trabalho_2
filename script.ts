@@ -3,6 +3,8 @@ var gl: WebGL2RenderingContext = canvas.getContext('webgl2')
 
 interface webGLVariables {
     program: WebGLProgram,
+    positionAttributeLocation: number,
+    colorAttributeLocation: number,
     vertexArrayObject: WebGLVertexArrayObject,
     matrixLocation: WebGLUniformLocation,
     resolutionLocation: WebGLUniformLocation,
@@ -34,7 +36,7 @@ var globalVariables: globalVariables = {
     "color": []
 }
 
-function main() {
+async function main() {
     if (!gl) {
         console.log('sem webgl2')
         return
@@ -74,137 +76,11 @@ function main() {
     }
     `
 
+    let response = await fetch('resources/models/cube/cube.obj')
+    let text = await response.text()
+    let data = parseOBJ(text)
+
     let drawDimensions = 3
-    //um F 3d
-    let positions = [
-        // left column front
-        0, 0, 0,
-        0, 150, 0,
-        30, 0, 0,
-        0, 150, 0,
-        30, 150, 0,
-        30, 0, 0,
-
-        // top rung front
-        30, 0, 0,
-        30, 30, 0,
-        100, 0, 0,
-        30, 30, 0,
-        100, 30, 0,
-        100, 0, 0,
-
-        // middle rung front
-        30, 60, 0,
-        30, 90, 0,
-        67, 60, 0,
-        30, 90, 0,
-        67, 90, 0,
-        67, 60, 0,
-
-        // left column back
-        0, 0, 30,
-        30, 0, 30,
-        0, 150, 30,
-        0, 150, 30,
-        30, 0, 30,
-        30, 150, 30,
-
-        // top rung back
-        30, 0, 30,
-        100, 0, 30,
-        30, 30, 30,
-        30, 30, 30,
-        100, 0, 30,
-        100, 30, 30,
-
-        // middle rung back
-        30, 60, 30,
-        67, 60, 30,
-        30, 90, 30,
-        30, 90, 30,
-        67, 60, 30,
-        67, 90, 30,
-
-        // top
-        0, 0, 0,
-        100, 0, 0,
-        100, 0, 30,
-        0, 0, 0,
-        100, 0, 30,
-        0, 0, 30,
-
-        // top rung right
-        100, 0, 0,
-        100, 30, 0,
-        100, 30, 30,
-        100, 0, 0,
-        100, 30, 30,
-        100, 0, 30,
-
-        // under top rung
-        30, 30, 0,
-        30, 30, 30,
-        100, 30, 30,
-        30, 30, 0,
-        100, 30, 30,
-        100, 30, 0,
-
-        // between top rung and middle
-        30, 30, 0,
-        30, 60, 30,
-        30, 30, 30,
-        30, 30, 0,
-        30, 60, 0,
-        30, 60, 30,
-
-        // top of middle rung
-        30, 60, 0,
-        67, 60, 30,
-        30, 60, 30,
-        30, 60, 0,
-        67, 60, 0,
-        67, 60, 30,
-
-        // right of middle rung
-        67, 60, 0,
-        67, 90, 30,
-        67, 60, 30,
-        67, 60, 0,
-        67, 90, 0,
-        67, 90, 30,
-
-        // bottom of middle rung.
-        30, 90, 0,
-        30, 90, 30,
-        67, 90, 30,
-        30, 90, 0,
-        67, 90, 30,
-        67, 90, 0,
-
-        // right of bottom
-        30, 90, 0,
-        30, 150, 30,
-        30, 90, 30,
-        30, 90, 0,
-        30, 150, 0,
-        30, 150, 30,
-
-        // bottom
-        0, 150, 0,
-        0, 150, 30,
-        30, 150, 30,
-        0, 150, 0,
-        30, 150, 30,
-        30, 150, 0,
-
-        // left side
-        0, 0, 0,
-        0, 0, 30,
-        0, 150, 30,
-        0, 0, 0,
-        0, 150, 30,
-        0, 150, 0,
-    ]
 
     let colors = [
         // left column front
@@ -336,7 +212,7 @@ function main() {
         160, 160, 220,
     ]
 
-    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, positions, colors)
+    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, data.position, colors)
 
     //funcao para transladar o objeto
     translate('set', -150, 0, -300)
@@ -344,23 +220,20 @@ function main() {
     //converte o angulo pro seno e cosseno e coloca na variavel
     //seno eh o x, cosseno eh o y
     convertDegreesToRadians('set', 'x', 0)
-    convertDegreesToRadians('set', 'y', 40)
-    convertDegreesToRadians('set', 'z', 40)
+    convertDegreesToRadians('set', 'y', 0)
+    convertDegreesToRadians('set', 'z', 220)
 
     //multiplica o x e o y fornecido pra escalar o objeto (nao multiplicar por 0)
-    scale(1, 1, 1)
-
-    //cor
-    globalVariables.color = [Math.random(), Math.random(), Math.random(), 1]
+    scale(100, 100, 100)
 
     //quantos pontos desenhar (quantas vezes rodar o vertex shader)
-    globalVariables.count = positions.length / drawDimensions
+    globalVariables.count = data.position.length / drawDimensions
 
     requestAnimationFrame(drawScene)
 }
 
 // -------INICIALIZACAO-------
-function init(vertexShaderSource: string, fragmentShaderSource: string, drawDimensions: number, positions: Array<number>, colors: Array<number>) {
+function init(vertexShaderSource: string, fragmentShaderSource: string, drawDimensions: number, positions: Array<number>, colors: Array<number> = []) {
     //cria shaders
     let vertexShader: WebGLShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
     let fragmentShader: WebGLShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource)
@@ -389,36 +262,14 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, drawDime
     //conecta esse objeto no webgl
     gl.bindVertexArray(vao)
 
-    //"liga" o atributo, desligado, possui um valor constante
-    gl.enableVertexAttribArray(positionAttributeLocation)
+    setShape(positions, positionAttributeLocation, drawDimensions)
 
-    //setShape(positions)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
-
-    //faz a mesma coisa mas adicionando informacoes de cores de cada vertice
-    let size = drawDimensions
-    let type = gl.FLOAT
-    let normalize = false
-    let stride = 0
-    let offset = 0
-    gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset)
-
-    let colorBuffer = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
-    //setColor(colors)
-    gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW)
-
-    gl.enableVertexAttribArray(colorAttributeLocation)
-
-    let sizeColor = drawDimensions
-    let typeColor = gl.UNSIGNED_BYTE
-    let normalizeColor = true
-    let strideColor = 0
-    let offsetColor = 0
-    gl.vertexAttribPointer(colorAttributeLocation, sizeColor, typeColor, normalizeColor, strideColor, offsetColor)
+    setColor(colors, colorAttributeLocation, drawDimensions)
 
     return {
         "program": program,
+        "positionAttributeLocation": positionAttributeLocation,
+        "colorAttributeLocation": colorAttributeLocation,
         "vertexArrayObject": vao,
         "matrixLocation": matrixLocation,
         "resolutionLocation": resolutionLocation,
@@ -469,16 +320,115 @@ function drawScene() {
     requestAnimationFrame(drawScene)
 }
 
-function setShape(positions: Array<number>) {
-    //coloca a info dos pontos no buffer
-    //              aonde colocar   tipo do dado                para otimizacao
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
+function parseOBJ(text) {
+    // because indices are base 1 let's just fill in the 0th data
+    const objPositions = [[0, 0, 0]];
+    const objTexcoords = [[0, 0]];
+    const objNormals = [[0, 0, 0]];
+
+    // same order as `f` indices
+    const objVertexData = [
+        objPositions,
+        objTexcoords,
+        objNormals,
+    ];
+
+    // same order as `f` indices
+    let webglVertexData = [
+        [],   // positions
+        [],   // texcoords
+        [],   // normals
+    ];
+
+    function addVertex(vert) {
+        const ptn = vert.split('/');
+        ptn.forEach((objIndexStr, i) => {
+            if (!objIndexStr) {
+                return;
+            }
+            const objIndex = parseInt(objIndexStr);
+            const index = objIndex + (objIndex >= 0 ? 0 : objVertexData[i].length);
+            webglVertexData[i].push(...objVertexData[i][index]);
+        });
+    }
+
+    const keywords = {
+        v(parts) {
+            objPositions.push(parts.map(parseFloat));
+        },
+        vn(parts) {
+            objNormals.push(parts.map(parseFloat));
+        },
+        vt(parts) {
+            // should check for missing v and extra w?
+            objTexcoords.push(parts.map(parseFloat));
+        },
+        f(parts) {
+            const numTriangles = parts.length - 2;
+            for (let tri = 0; tri < numTriangles; ++tri) {
+                addVertex(parts[0]);
+                addVertex(parts[tri + 1]);
+                addVertex(parts[tri + 2]);
+            }
+        },
+    };
+
+    const keywordRE = /(\w*)(?: )*(.*)/;
+    const lines = text.split('\n');
+    for (let lineNo = 0; lineNo < lines.length; ++lineNo) {
+        const line = lines[lineNo].trim();
+        if (line === '' || line.startsWith('#')) {
+            continue;
+        }
+        const m = keywordRE.exec(line);
+        if (!m) {
+            continue;
+        }
+        const [, keyword, unparsedArgs] = m;
+        const parts = line.split(/\s+/).slice(1);
+        const handler = keywords[keyword];
+        if (!handler) {
+            console.warn('unhandled keyword:', keyword);  // eslint-disable-line no-console
+            continue;
+        }
+        handler(parts, unparsedArgs);
+    }
+
+    return {
+        position: webglVertexData[0],
+        texcoord: webglVertexData[1],
+        normal: webglVertexData[2],
+    };
 }
 
-function setColor(color: Array<number>) {
-    //coloca a info dos pontos no buffer
-    //            aonde colocar    tipo do dado           para otimizacao
+function setShape(positions: Array<number>, positionAttributeLocation: number, drawDimensions: number) {
+    //"liga" o atributo, desligado, possui um valor constante
+    gl.enableVertexAttribArray(positionAttributeLocation)
+
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
+
+    let size = drawDimensions
+    let type = gl.FLOAT
+    let normalize = false
+    let stride = 0
+    let offset = 0
+    gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset)
+}
+
+function setColor(color: Array<number>, colorAttributeLocation: number, drawDimensions: number) {
+    let colorBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+
     gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(color), gl.STATIC_DRAW)
+
+    gl.enableVertexAttribArray(colorAttributeLocation)
+
+    let sizeColor = drawDimensions
+    let typeColor = gl.UNSIGNED_BYTE
+    let normalizeColor = true
+    let strideColor = 0
+    let offsetColor = 0
+    gl.vertexAttribPointer(colorAttributeLocation, sizeColor, typeColor, normalizeColor, strideColor, offsetColor)
 }
 
 function updateFOV(degrees: number) {

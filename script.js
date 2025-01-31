@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var canvas = document.querySelector('#canv');
 var gl = canvas.getContext('webgl2');
 var webGLVariables;
@@ -13,308 +22,205 @@ var globalVariables = {
     "color": []
 };
 function main() {
-    if (!gl) {
-        console.log('sem webgl2');
-        return;
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!gl) {
+            console.log('sem webgl2');
+            return;
+        }
+        else {
+            console.log('webgl ok');
+        }
+        //variaveis string com o codigo pros shaders do webgl
+        let vertexShaderSource = /*glsl*/ `#version 300 es
+
+    in vec4 a_position;
+    in vec4 a_color;
+
+    uniform mat4 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)
+    
+    out vec4 v_color;
+
+    void main () {
+        gl_Position = u_matrix * a_position;
+
+        v_color = a_color;
     }
-    else {
-        console.log('webgl ok');
+    `;
+        let fragmentShaderSource = /*glsl*/ `#version 300 es
+
+    precision highp float;
+
+    //uniform vec4 u_color;
+
+    in vec4 v_color;
+
+    out vec4 outColor;
+
+    void main () {
+        outColor = v_color;
     }
-    //variaveis string com o codigo pros shaders do webgl
-    var vertexShaderSource = /*glsl*/ "#version 300 es\n\n    in vec4 a_position;\n    in vec4 a_color;\n\n    uniform mat4 u_matrix; // matriz com todas as mudancas em uma so (translacao, rotacao e escala)\n    \n    out vec4 v_color;\n\n    void main () {\n        gl_Position = u_matrix * a_position;\n\n        v_color = a_color;\n    }\n    ";
-    var fragmentShaderSource = /*glsl*/ "#version 300 es\n\n    precision highp float;\n\n    //uniform vec4 u_color;\n\n    in vec4 v_color;\n\n    out vec4 outColor;\n\n    void main () {\n        outColor = v_color;\n    }\n    ";
-    var drawDimensions = 3;
-    //um F 3d
-    var positions = [
-        // left column front
-        0, 0, 0,
-        0, 150, 0,
-        30, 0, 0,
-        0, 150, 0,
-        30, 150, 0,
-        30, 0, 0,
-        // top rung front
-        30, 0, 0,
-        30, 30, 0,
-        100, 0, 0,
-        30, 30, 0,
-        100, 30, 0,
-        100, 0, 0,
-        // middle rung front
-        30, 60, 0,
-        30, 90, 0,
-        67, 60, 0,
-        30, 90, 0,
-        67, 90, 0,
-        67, 60, 0,
-        // left column back
-        0, 0, 30,
-        30, 0, 30,
-        0, 150, 30,
-        0, 150, 30,
-        30, 0, 30,
-        30, 150, 30,
-        // top rung back
-        30, 0, 30,
-        100, 0, 30,
-        30, 30, 30,
-        30, 30, 30,
-        100, 0, 30,
-        100, 30, 30,
-        // middle rung back
-        30, 60, 30,
-        67, 60, 30,
-        30, 90, 30,
-        30, 90, 30,
-        67, 60, 30,
-        67, 90, 30,
-        // top
-        0, 0, 0,
-        100, 0, 0,
-        100, 0, 30,
-        0, 0, 0,
-        100, 0, 30,
-        0, 0, 30,
-        // top rung right
-        100, 0, 0,
-        100, 30, 0,
-        100, 30, 30,
-        100, 0, 0,
-        100, 30, 30,
-        100, 0, 30,
-        // under top rung
-        30, 30, 0,
-        30, 30, 30,
-        100, 30, 30,
-        30, 30, 0,
-        100, 30, 30,
-        100, 30, 0,
-        // between top rung and middle
-        30, 30, 0,
-        30, 60, 30,
-        30, 30, 30,
-        30, 30, 0,
-        30, 60, 0,
-        30, 60, 30,
-        // top of middle rung
-        30, 60, 0,
-        67, 60, 30,
-        30, 60, 30,
-        30, 60, 0,
-        67, 60, 0,
-        67, 60, 30,
-        // right of middle rung
-        67, 60, 0,
-        67, 90, 30,
-        67, 60, 30,
-        67, 60, 0,
-        67, 90, 0,
-        67, 90, 30,
-        // bottom of middle rung.
-        30, 90, 0,
-        30, 90, 30,
-        67, 90, 30,
-        30, 90, 0,
-        67, 90, 30,
-        67, 90, 0,
-        // right of bottom
-        30, 90, 0,
-        30, 150, 30,
-        30, 90, 30,
-        30, 90, 0,
-        30, 150, 0,
-        30, 150, 30,
-        // bottom
-        0, 150, 0,
-        0, 150, 30,
-        30, 150, 30,
-        0, 150, 0,
-        30, 150, 30,
-        30, 150, 0,
-        // left side
-        0, 0, 0,
-        0, 0, 30,
-        0, 150, 30,
-        0, 0, 0,
-        0, 150, 30,
-        0, 150, 0,
-    ];
-    var colors = [
-        // left column front
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        // top rung front
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        // middle rung front
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        // left column back
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        // top rung back
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        // middle rung back
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        // top
-        70, 200, 210,
-        70, 200, 210,
-        70, 200, 210,
-        70, 200, 210,
-        70, 200, 210,
-        70, 200, 210,
-        // top rung right
-        200, 200, 70,
-        200, 200, 70,
-        200, 200, 70,
-        200, 200, 70,
-        200, 200, 70,
-        200, 200, 70,
-        // under top rung
-        210, 100, 70,
-        210, 100, 70,
-        210, 100, 70,
-        210, 100, 70,
-        210, 100, 70,
-        210, 100, 70,
-        // between top rung and middle
-        210, 160, 70,
-        210, 160, 70,
-        210, 160, 70,
-        210, 160, 70,
-        210, 160, 70,
-        210, 160, 70,
-        // top of middle rung
-        70, 180, 210,
-        70, 180, 210,
-        70, 180, 210,
-        70, 180, 210,
-        70, 180, 210,
-        70, 180, 210,
-        // right of middle rung
-        100, 70, 210,
-        100, 70, 210,
-        100, 70, 210,
-        100, 70, 210,
-        100, 70, 210,
-        100, 70, 210,
-        // bottom of middle rung.
-        76, 210, 100,
-        76, 210, 100,
-        76, 210, 100,
-        76, 210, 100,
-        76, 210, 100,
-        76, 210, 100,
-        // right of bottom
-        140, 210, 80,
-        140, 210, 80,
-        140, 210, 80,
-        140, 210, 80,
-        140, 210, 80,
-        140, 210, 80,
-        // bottom
-        90, 130, 110,
-        90, 130, 110,
-        90, 130, 110,
-        90, 130, 110,
-        90, 130, 110,
-        90, 130, 110,
-        // left side
-        160, 160, 220,
-        160, 160, 220,
-        160, 160, 220,
-        160, 160, 220,
-        160, 160, 220,
-        160, 160, 220,
-    ];
-    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, positions, colors);
-    //funcao para transladar o objeto
-    translate('set', -150, 0, -300);
-    //converte o angulo pro seno e cosseno e coloca na variavel
-    //seno eh o x, cosseno eh o y
-    convertDegreesToRadians('set', 'x', 0);
-    convertDegreesToRadians('set', 'y', 40);
-    convertDegreesToRadians('set', 'z', 40);
-    //multiplica o x e o y fornecido pra escalar o objeto (nao multiplicar por 0)
-    scale(1, 1, 1);
-    //cor
-    globalVariables.color = [Math.random(), Math.random(), Math.random(), 1];
-    //quantos pontos desenhar (quantas vezes rodar o vertex shader)
-    globalVariables.count = positions.length / drawDimensions;
-    requestAnimationFrame(drawScene);
+    `;
+        let response = yield fetch('resources/models/cube/cube.obj');
+        let text = yield response.text();
+        let data = parseOBJ(text);
+        let drawDimensions = 3;
+        let colors = [
+            // left column front
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            // top rung front
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            // middle rung front
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            // left column back
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            // top rung back
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            // middle rung back
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            // top
+            70, 200, 210,
+            70, 200, 210,
+            70, 200, 210,
+            70, 200, 210,
+            70, 200, 210,
+            70, 200, 210,
+            // top rung right
+            200, 200, 70,
+            200, 200, 70,
+            200, 200, 70,
+            200, 200, 70,
+            200, 200, 70,
+            200, 200, 70,
+            // under top rung
+            210, 100, 70,
+            210, 100, 70,
+            210, 100, 70,
+            210, 100, 70,
+            210, 100, 70,
+            210, 100, 70,
+            // between top rung and middle
+            210, 160, 70,
+            210, 160, 70,
+            210, 160, 70,
+            210, 160, 70,
+            210, 160, 70,
+            210, 160, 70,
+            // top of middle rung
+            70, 180, 210,
+            70, 180, 210,
+            70, 180, 210,
+            70, 180, 210,
+            70, 180, 210,
+            70, 180, 210,
+            // right of middle rung
+            100, 70, 210,
+            100, 70, 210,
+            100, 70, 210,
+            100, 70, 210,
+            100, 70, 210,
+            100, 70, 210,
+            // bottom of middle rung.
+            76, 210, 100,
+            76, 210, 100,
+            76, 210, 100,
+            76, 210, 100,
+            76, 210, 100,
+            76, 210, 100,
+            // right of bottom
+            140, 210, 80,
+            140, 210, 80,
+            140, 210, 80,
+            140, 210, 80,
+            140, 210, 80,
+            140, 210, 80,
+            // bottom
+            90, 130, 110,
+            90, 130, 110,
+            90, 130, 110,
+            90, 130, 110,
+            90, 130, 110,
+            90, 130, 110,
+            // left side
+            160, 160, 220,
+            160, 160, 220,
+            160, 160, 220,
+            160, 160, 220,
+            160, 160, 220,
+            160, 160, 220,
+        ];
+        webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, data.position, colors);
+        //funcao para transladar o objeto
+        translate('set', -150, 0, -300);
+        //converte o angulo pro seno e cosseno e coloca na variavel
+        //seno eh o x, cosseno eh o y
+        convertDegreesToRadians('set', 'x', 0);
+        convertDegreesToRadians('set', 'y', 0);
+        convertDegreesToRadians('set', 'z', 220);
+        //multiplica o x e o y fornecido pra escalar o objeto (nao multiplicar por 0)
+        scale(100, 100, 100);
+        //quantos pontos desenhar (quantas vezes rodar o vertex shader)
+        globalVariables.count = data.position.length / drawDimensions;
+        requestAnimationFrame(drawScene);
+    });
 }
 // -------INICIALIZACAO-------
-function init(vertexShaderSource, fragmentShaderSource, drawDimensions, positions, colors) {
+function init(vertexShaderSource, fragmentShaderSource, drawDimensions, positions, colors = []) {
     //cria shaders
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    let vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    let fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
     //linka com programa
-    var program = createProgram(vertexShader, fragmentShader);
+    let program = createProgram(vertexShader, fragmentShader);
     //pega posicao do atributo que preciso dar informacao (fazer na inicializacao)
-    var positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
-    var colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
+    let positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+    let colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
     //pega as variaveis globais dos shaders
-    var matrixLocation = gl.getUniformLocation(program, 'u_matrix'); //matriz de mudancas
-    var resolutionLocation = gl.getUniformLocation(program, 'u_resolution'); //resolucao do canvas (utilizar apenas em 2d eu acho)
-    var colorLocation = gl.getUniformLocation(program, 'u_color'); //cor
+    let matrixLocation = gl.getUniformLocation(program, 'u_matrix'); //matriz de mudancas
+    let resolutionLocation = gl.getUniformLocation(program, 'u_resolution'); //resolucao do canvas (utilizar apenas em 2d eu acho)
+    let colorLocation = gl.getUniformLocation(program, 'u_color'); //cor
     //cria um buffer pro atributo pegar informacoes dele
-    var positionBuffer = gl.createBuffer();
+    let positionBuffer = gl.createBuffer();
     //conecta o buffer com  a "variavel global" do webgl, conhecido como bind point
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     //cria um objeto vertex array pra tirar dados do buffer
-    var vao = gl.createVertexArray();
+    let vao = gl.createVertexArray();
     //conecta esse objeto no webgl
     gl.bindVertexArray(vao);
-    //"liga" o atributo, desligado, possui um valor constante
-    gl.enableVertexAttribArray(positionAttributeLocation);
-    //setShape(positions)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-    //faz a mesma coisa mas adicionando informacoes de cores de cada vertice
-    var size = drawDimensions;
-    var type = gl.FLOAT;
-    var normalize = false;
-    var stride = 0;
-    var offset = 0;
-    gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-    var colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    //setColor(colors)
-    gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(colorAttributeLocation);
-    var sizeColor = drawDimensions;
-    var typeColor = gl.UNSIGNED_BYTE;
-    var normalizeColor = true;
-    var strideColor = 0;
-    var offsetColor = 0;
-    gl.vertexAttribPointer(colorAttributeLocation, sizeColor, typeColor, normalizeColor, strideColor, offsetColor);
+    setShape(positions, positionAttributeLocation, drawDimensions);
+    setColor(colors, colorAttributeLocation, drawDimensions);
     return {
         "program": program,
+        "positionAttributeLocation": positionAttributeLocation,
+        "colorAttributeLocation": colorAttributeLocation,
         "vertexArrayObject": vao,
         "matrixLocation": matrixLocation,
         "resolutionLocation": resolutionLocation,
@@ -340,35 +246,122 @@ function drawScene() {
     //para criar as matrizes de modificacao de pontos
     //e multiplica elas entre si para retornar uma unica matriz
     //que contem todas as mudancas
-    var matrix = multiplyMatrices();
+    let matrix = multiplyMatrices();
     //seta matriz de mudancas
     gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, matrix);
     //seta a cor
     //gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color)
     //desenha o que ta no array
-    var primitiveType = gl.TRIANGLES;
-    var offset = 0;
+    let primitiveType = gl.TRIANGLES;
+    let offset = 0;
     gl.drawArrays(primitiveType, offset, globalVariables.count);
     //faz um loop, animando o desenho
     requestAnimationFrame(drawScene);
 }
-function setShape(positions) {
-    //coloca a info dos pontos no buffer
-    //              aonde colocar   tipo do dado                para otimizacao
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+function parseOBJ(text) {
+    // because indices are base 1 let's just fill in the 0th data
+    const objPositions = [[0, 0, 0]];
+    const objTexcoords = [[0, 0]];
+    const objNormals = [[0, 0, 0]];
+    // same order as `f` indices
+    const objVertexData = [
+        objPositions,
+        objTexcoords,
+        objNormals,
+    ];
+    // same order as `f` indices
+    let webglVertexData = [
+        [], // positions
+        [], // texcoords
+        [], // normals
+    ];
+    function addVertex(vert) {
+        const ptn = vert.split('/');
+        ptn.forEach((objIndexStr, i) => {
+            if (!objIndexStr) {
+                return;
+            }
+            const objIndex = parseInt(objIndexStr);
+            const index = objIndex + (objIndex >= 0 ? 0 : objVertexData[i].length);
+            webglVertexData[i].push(...objVertexData[i][index]);
+        });
+    }
+    const keywords = {
+        v(parts) {
+            objPositions.push(parts.map(parseFloat));
+        },
+        vn(parts) {
+            objNormals.push(parts.map(parseFloat));
+        },
+        vt(parts) {
+            // should check for missing v and extra w?
+            objTexcoords.push(parts.map(parseFloat));
+        },
+        f(parts) {
+            const numTriangles = parts.length - 2;
+            for (let tri = 0; tri < numTriangles; ++tri) {
+                addVertex(parts[0]);
+                addVertex(parts[tri + 1]);
+                addVertex(parts[tri + 2]);
+            }
+        },
+    };
+    const keywordRE = /(\w*)(?: )*(.*)/;
+    const lines = text.split('\n');
+    for (let lineNo = 0; lineNo < lines.length; ++lineNo) {
+        const line = lines[lineNo].trim();
+        if (line === '' || line.startsWith('#')) {
+            continue;
+        }
+        const m = keywordRE.exec(line);
+        if (!m) {
+            continue;
+        }
+        const [, keyword, unparsedArgs] = m;
+        const parts = line.split(/\s+/).slice(1);
+        const handler = keywords[keyword];
+        if (!handler) {
+            console.warn('unhandled keyword:', keyword); // eslint-disable-line no-console
+            continue;
+        }
+        handler(parts, unparsedArgs);
+    }
+    return {
+        position: webglVertexData[0],
+        texcoord: webglVertexData[1],
+        normal: webglVertexData[2],
+    };
 }
-function setColor(color) {
-    //coloca a info dos pontos no buffer
-    //            aonde colocar    tipo do dado           para otimizacao
+function setShape(positions, positionAttributeLocation, drawDimensions) {
+    //"liga" o atributo, desligado, possui um valor constante
+    gl.enableVertexAttribArray(positionAttributeLocation);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    let size = drawDimensions;
+    let type = gl.FLOAT;
+    let normalize = false;
+    let stride = 0;
+    let offset = 0;
+    gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+}
+function setColor(color, colorAttributeLocation, drawDimensions) {
+    let colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(color), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(colorAttributeLocation);
+    let sizeColor = drawDimensions;
+    let typeColor = gl.UNSIGNED_BYTE;
+    let normalizeColor = true;
+    let strideColor = 0;
+    let offsetColor = 0;
+    gl.vertexAttribPointer(colorAttributeLocation, sizeColor, typeColor, normalizeColor, strideColor, offsetColor);
 }
 function updateFOV(degrees) {
     globalVariables.FOVRadians = degrees * Math.PI / 180;
 }
 function multiplyMatrices() {
-    var aspect = gl.canvas.width / gl.canvas.height;
-    var zNear = 1;
-    var zFar = 2000;
+    let aspect = gl.canvas.width / gl.canvas.height;
+    let zNear = 1;
+    let zFar = 2000;
     /*let left = 0
     let right = gl.canvas.width
     let bottom = gl.canvas.height
@@ -378,7 +371,7 @@ function multiplyMatrices() {
 
     //let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400)
     let matrix = m4.orthographic(left, right, bottom, top, near, far)*/
-    var matrix = m4.perspective(globalVariables.FOVRadians, aspect, zNear, zFar);
+    let matrix = m4.perspective(globalVariables.FOVRadians, aspect, zNear, zFar);
     matrix = m4.translate(matrix, globalVariables.translation[0], globalVariables.translation[1], globalVariables.translation[2]);
     matrix = m4.xRotate(matrix, globalVariables.rotation[0]);
     matrix = m4.yRotate(matrix, globalVariables.rotation[1]);
@@ -386,11 +379,7 @@ function multiplyMatrices() {
     matrix = m4.scale(matrix, globalVariables.scale[0], globalVariables.scale[1], globalVariables.scale[2]);
     return matrix;
 }
-function translate(mode, x, y, z) {
-    if (mode === void 0) { mode = 'set'; }
-    if (x === void 0) { x = 0; }
-    if (y === void 0) { y = 0; }
-    if (z === void 0) { z = 0; }
+function translate(mode = 'set', x = 0, y = 0, z = 0) {
     if (mode == 'set') {
         globalVariables.translation[0] = x;
         globalVariables.translation[1] = y;
@@ -474,8 +463,8 @@ var m4 = {
         ];
     },
     perspective: function (FOVRadians, aspect, near, far) {
-        var f = Math.tan(Math.PI * 0.5 - 0.5 * FOVRadians);
-        var rangeInv = 1.0 / (near - far);
+        let f = Math.tan(Math.PI * 0.5 - 0.5 * FOVRadians);
+        let rangeInv = 1.0 / (near - far);
         return [
             f / aspect, 0, 0, 0,
             0, f, 0, 0,
@@ -653,8 +642,8 @@ var m3 = {
     },
     rotate: function (radians) {
         globalVariables.currentAngleRadians = radians;
-        var s = Math.sin(radians);
-        var c = Math.cos(radians);
+        let s = Math.sin(radians);
+        let c = Math.cos(radians);
         return [
             c, -s, 0,
             s, c, 0,
@@ -671,10 +660,10 @@ var m3 = {
 };
 function resizeCanvasToDisplaySize(canvas) {
     // Lookup the size the browser is displaying the canvas in CSS pixels.
-    var displayWidth = canvas.clientWidth;
-    var displayHeight = canvas.clientHeight;
+    const displayWidth = canvas.clientWidth;
+    const displayHeight = canvas.clientHeight;
     // Check if the canvas is not the same size.
-    var needResize = canvas.width !== displayWidth ||
+    const needResize = canvas.width !== displayWidth ||
         canvas.height !== displayHeight;
     if (needResize) {
         // Make the canvas the same size
@@ -685,10 +674,10 @@ function resizeCanvasToDisplaySize(canvas) {
 }
 //funcao de criar shader
 function createShader(gl, type, source) {
-    var shader = gl.createShader(type); // cria um shader no webgl
+    let shader = gl.createShader(type); // cria um shader no webgl
     gl.shaderSource(shader, source); // poe o codigo fonte ndo shader no webgl
     gl.compileShader(shader); // compila
-    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
     if (success) {
         return shader;
     }
@@ -696,11 +685,11 @@ function createShader(gl, type, source) {
     gl.deleteShader(shader);
 }
 function createProgram(vertexShader, fragmentShader) {
-    var program = gl.createProgram(); // cria programa
+    let program = gl.createProgram(); // cria programa
     gl.attachShader(program, vertexShader); // conecta os shaders com o programa
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program); // conecta o programa com o webgl
-    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    let success = gl.getProgramParameter(program, gl.LINK_STATUS);
     if (success) {
         return program;
     }
