@@ -7,8 +7,7 @@ interface webGLVariables {
     colorAttributeLocation: number,
     vertexArrayObject: WebGLVertexArrayObject,
     matrixLocation: WebGLUniformLocation,
-    resolutionLocation: WebGLUniformLocation,
-    colorLocation: WebGLUniformLocation,
+    //colorUniformLocation: WebGLUniformLocation
 }
 
 interface globalVariables {
@@ -65,7 +64,7 @@ async function main() {
 
     precision highp float;
 
-    //uniform vec4 u_color;
+    uniform vec4 u_color;
 
     in vec4 v_color;
 
@@ -76,158 +75,174 @@ async function main() {
     }
     `
 
-    let response = await fetch('resources/models/cube/cube.obj')
-    let text = await response.text()
-    let data = parseOBJ(text)
-
     let drawDimensions = 3
+    let objects = {
+        "cube": {
+            position: [],
+            color: []
+        },
+        "skull": {
+            position: [],
+            color: []
+        },
+        "ball": {
+            position: [],
+            color: []
+        }
+    }
 
-    let colors = [
-        // left column front
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
+    objects.cube = await loadObjectFromFile('resources/models/cube/cube.obj')
+    objects.skull = await loadObjectFromFile('resources/models/skull/skull.obj')
+    objects.ball = await loadObjectFromFile('resources/models/ball/ball.obj')
 
-        // top rung front
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
+    //quantos pontos desenhar (quantas vezes rodar o vertex shader)
+    globalVariables.count = objects.skull.position.length / drawDimensions
 
-        // middle rung front
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
-        200, 70, 120,
+    /*
+        let colors = [
+            // left column front
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+    
+            // top rung front
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+    
+            // middle rung front
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+            200, 70, 120,
+    
+            // left column back
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+    
+            // top rung back
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+    
+            // middle rung back
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+            80, 70, 200,
+    
+            // top
+            70, 200, 210,
+            70, 200, 210,
+            70, 200, 210,
+            70, 200, 210,
+            70, 200, 210,
+            70, 200, 210,
+    
+            // top rung right
+            200, 200, 70,
+            200, 200, 70,
+            200, 200, 70,
+            200, 200, 70,
+            200, 200, 70,
+            200, 200, 70,
+    
+            // under top rung
+            210, 100, 70,
+            210, 100, 70,
+            210, 100, 70,
+            210, 100, 70,
+            210, 100, 70,
+            210, 100, 70,
+    
+            // between top rung and middle
+            210, 160, 70,
+            210, 160, 70,
+            210, 160, 70,
+            210, 160, 70,
+            210, 160, 70,
+            210, 160, 70,
+    
+            // top of middle rung
+            70, 180, 210,
+            70, 180, 210,
+            70, 180, 210,
+            70, 180, 210,
+            70, 180, 210,
+            70, 180, 210,
+    
+            // right of middle rung
+            100, 70, 210,
+            100, 70, 210,
+            100, 70, 210,
+            100, 70, 210,
+            100, 70, 210,
+            100, 70, 210,
+    
+            // bottom of middle rung.
+            76, 210, 100,
+            76, 210, 100,
+            76, 210, 100,
+            76, 210, 100,
+            76, 210, 100,
+            76, 210, 100,
+    
+            // right of bottom
+            140, 210, 80,
+            140, 210, 80,
+            140, 210, 80,
+            140, 210, 80,
+            140, 210, 80,
+            140, 210, 80,
+    
+            // bottom
+            90, 130, 110,
+            90, 130, 110,
+            90, 130, 110,
+            90, 130, 110,
+            90, 130, 110,
+            90, 130, 110,
+    
+            // left side
+            160, 160, 220,
+            160, 160, 220,
+            160, 160, 220,
+            160, 160, 220,
+            160, 160, 220,
+            160, 160, 220,
+        ]
+    */
 
-        // left column back
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-
-        // top rung back
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-
-        // middle rung back
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-        80, 70, 200,
-
-        // top
-        70, 200, 210,
-        70, 200, 210,
-        70, 200, 210,
-        70, 200, 210,
-        70, 200, 210,
-        70, 200, 210,
-
-        // top rung right
-        200, 200, 70,
-        200, 200, 70,
-        200, 200, 70,
-        200, 200, 70,
-        200, 200, 70,
-        200, 200, 70,
-
-        // under top rung
-        210, 100, 70,
-        210, 100, 70,
-        210, 100, 70,
-        210, 100, 70,
-        210, 100, 70,
-        210, 100, 70,
-
-        // between top rung and middle
-        210, 160, 70,
-        210, 160, 70,
-        210, 160, 70,
-        210, 160, 70,
-        210, 160, 70,
-        210, 160, 70,
-
-        // top of middle rung
-        70, 180, 210,
-        70, 180, 210,
-        70, 180, 210,
-        70, 180, 210,
-        70, 180, 210,
-        70, 180, 210,
-
-        // right of middle rung
-        100, 70, 210,
-        100, 70, 210,
-        100, 70, 210,
-        100, 70, 210,
-        100, 70, 210,
-        100, 70, 210,
-
-        // bottom of middle rung.
-        76, 210, 100,
-        76, 210, 100,
-        76, 210, 100,
-        76, 210, 100,
-        76, 210, 100,
-        76, 210, 100,
-
-        // right of bottom
-        140, 210, 80,
-        140, 210, 80,
-        140, 210, 80,
-        140, 210, 80,
-        140, 210, 80,
-        140, 210, 80,
-
-        // bottom
-        90, 130, 110,
-        90, 130, 110,
-        90, 130, 110,
-        90, 130, 110,
-        90, 130, 110,
-        90, 130, 110,
-
-        // left side
-        160, 160, 220,
-        160, 160, 220,
-        160, 160, 220,
-        160, 160, 220,
-        160, 160, 220,
-        160, 160, 220,
-    ]
-
-    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, data.position, colors)
+    webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, objects.skull.position, objects.skull.color)
 
     //funcao para transladar o objeto
-    translate('set', -150, 0, -300)
+    translate('set', 0, 0, -300)
 
     //converte o angulo pro seno e cosseno e coloca na variavel
     //seno eh o x, cosseno eh o y
-    convertDegreesToRadians('set', 'x', 0)
+    convertDegreesToRadians('set', 'x', 270)
     convertDegreesToRadians('set', 'y', 0)
-    convertDegreesToRadians('set', 'z', 220)
+    convertDegreesToRadians('set', 'z', 0)
 
     //multiplica o x e o y fornecido pra escalar o objeto (nao multiplicar por 0)
-    scale(100, 100, 100)
-
-    //quantos pontos desenhar (quantas vezes rodar o vertex shader)
-    globalVariables.count = data.position.length / drawDimensions
+    scale(10, 10, 10)
 
     requestAnimationFrame(drawScene)
 }
@@ -247,14 +262,7 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, drawDime
 
     //pega as variaveis globais dos shaders
     let matrixLocation = gl.getUniformLocation(program, 'u_matrix') //matriz de mudancas
-    let resolutionLocation = gl.getUniformLocation(program, 'u_resolution') //resolucao do canvas (utilizar apenas em 2d eu acho)
-    let colorLocation = gl.getUniformLocation(program, 'u_color') //cor
-
-    //cria um buffer pro atributo pegar informacoes dele
-    let positionBuffer = gl.createBuffer()
-
-    //conecta o buffer com  a "variavel global" do webgl, conhecido como bind point
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+    //let colorLocation = gl.getUniformLocation(program, 'u_color') //cor
 
     //cria um objeto vertex array pra tirar dados do buffer
     let vao = gl.createVertexArray()
@@ -272,8 +280,7 @@ function init(vertexShaderSource: string, fragmentShaderSource: string, drawDime
         "colorAttributeLocation": colorAttributeLocation,
         "vertexArrayObject": vao,
         "matrixLocation": matrixLocation,
-        "resolutionLocation": resolutionLocation,
-        "colorLocation": colorLocation,
+        //"colorUniformLocation" : colorLocation
     }
 }
 
@@ -297,7 +304,7 @@ function drawScene() {
     //diz qual vertex array vai ser usado pra retirar informacoes do buffer
     gl.bindVertexArray(webGLVariables.vertexArrayObject)
 
-    convertDegreesToRadians('add', 'y', 1)
+    convertDegreesToRadians('add', 'z', 1)
 
     //usa as variaveis globais de translacao rotacao e escala
     //para criar as matrizes de modificacao de pontos
@@ -308,9 +315,6 @@ function drawScene() {
     //seta matriz de mudancas
     gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, matrix)
 
-    //seta a cor
-    //gl.uniform4fv(webGLVariables.colorLocation, globalVariables.color)
-
     //desenha o que ta no array
     let primitiveType = gl.TRIANGLES
     let offset = 0
@@ -320,7 +324,33 @@ function drawScene() {
     requestAnimationFrame(drawScene)
 }
 
-function parseOBJ(text) {
+function loadShape(shape: string) {
+    if (shape == 'cube') {
+
+    } else if (shape == 'skull') {
+
+    } else if (shape == 'ball') {
+
+    }
+}
+
+async function loadObjectFromFile(path: string): Promise<{ position: Array<number>, color: Array<number> }> {
+    let colors = []
+    let response = await fetch(path)
+    let text = await response.text()
+    let data = parseOBJ(text)
+
+    data.position.forEach(element => {
+        colors.push(Math.floor(Math.random() * 255))
+    });
+
+    return {
+        position: data.position,
+        color: colors
+    }
+}
+
+function parseOBJ(text: string) {
     // because indices are base 1 let's just fill in the 0th data
     const objPositions = [[0, 0, 0]];
     const objTexcoords = [[0, 0]];
@@ -396,16 +426,22 @@ function parseOBJ(text) {
 
     return {
         position: webglVertexData[0],
-        texcoord: webglVertexData[1],
-        normal: webglVertexData[2],
+        //texcoord: webglVertexData[1],
+        //normal: webglVertexData[2],
     };
 }
 
 function setShape(positions: Array<number>, positionAttributeLocation: number, drawDimensions: number) {
-    //"liga" o atributo, desligado, possui um valor constante
-    gl.enableVertexAttribArray(positionAttributeLocation)
+    //cria um buffer pro atributo pegar informacoes dele
+    let positionBuffer = gl.createBuffer()
+
+    //conecta o buffer com  a "variavel global" do webgl, conhecido como bind point
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
+
+    //"liga" o atributo, desligado, possui um valor constante
+    gl.enableVertexAttribArray(positionAttributeLocation)
 
     let size = drawDimensions
     let type = gl.FLOAT
@@ -417,6 +453,7 @@ function setShape(positions: Array<number>, positionAttributeLocation: number, d
 
 function setColor(color: Array<number>, colorAttributeLocation: number, drawDimensions: number) {
     let colorBuffer = gl.createBuffer()
+
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
 
     gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(color), gl.STATIC_DRAW)
