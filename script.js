@@ -11,6 +11,7 @@ var canvas = document.querySelector('#canv');
 var gl = canvas.getContext('webgl2');
 var webGLVariables;
 var globalVariables = {
+    "drawDimensions": 3,
     "count": 0,
     "FOVRadians": 2,
     "currentAngleDegrees": 0,
@@ -19,7 +20,37 @@ var globalVariables = {
     "translation": [],
     "rotation": [],
     "scale": [],
-    "color": []
+    "color": [],
+    "objects": {
+        "cube": {
+            "position": [0, 0, 0],
+            "color": [0, 0, 0],
+            "translation": [0, 0, 0],
+            "rotation": [0, 0, 0],
+            "scale": [0, 0, 0],
+            "count": 0
+        },
+        "skull": {
+            "position": [0, 0, 0],
+            "color": [0, 0, 0],
+            "translation": [0, 0, 0],
+            "rotation": [0, 0, 0],
+            "scale": [0, 0, 0],
+            "count": 0
+        },
+        "ball": {
+            "position": [0, 0, 0],
+            "color": [0, 0, 0],
+            "translation": [0, 0, 0],
+            "rotation": [0, 0, 0],
+            "scale": [0, 0, 0],
+            "count": 0
+        },
+    },
+    "cubeLoaded": false,
+    "skullLoaded": false,
+    "ballLoaded": false,
+    "vaoSelected": {}
 };
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -60,172 +91,12 @@ function main() {
         outColor = v_color;
     }
     `;
-        let drawDimensions = 3;
-        let objects = {
-            "cube": {
-                position: [],
-                color: []
-            },
-            "skull": {
-                position: [],
-                color: []
-            },
-            "ball": {
-                position: [],
-                color: []
-            }
-        };
-        objects.cube = yield loadObjectFromFile('resources/models/cube/cube.obj');
-        objects.skull = yield loadObjectFromFile('resources/models/skull/skull.obj');
-        objects.ball = yield loadObjectFromFile('resources/models/ball/ball.obj');
-        //quantos pontos desenhar (quantas vezes rodar o vertex shader)
-        globalVariables.count = objects.skull.position.length / drawDimensions;
-        /*
-            let colors = [
-                // left column front
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-        
-                // top rung front
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-        
-                // middle rung front
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-                200, 70, 120,
-        
-                // left column back
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-        
-                // top rung back
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-        
-                // middle rung back
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-                80, 70, 200,
-        
-                // top
-                70, 200, 210,
-                70, 200, 210,
-                70, 200, 210,
-                70, 200, 210,
-                70, 200, 210,
-                70, 200, 210,
-        
-                // top rung right
-                200, 200, 70,
-                200, 200, 70,
-                200, 200, 70,
-                200, 200, 70,
-                200, 200, 70,
-                200, 200, 70,
-        
-                // under top rung
-                210, 100, 70,
-                210, 100, 70,
-                210, 100, 70,
-                210, 100, 70,
-                210, 100, 70,
-                210, 100, 70,
-        
-                // between top rung and middle
-                210, 160, 70,
-                210, 160, 70,
-                210, 160, 70,
-                210, 160, 70,
-                210, 160, 70,
-                210, 160, 70,
-        
-                // top of middle rung
-                70, 180, 210,
-                70, 180, 210,
-                70, 180, 210,
-                70, 180, 210,
-                70, 180, 210,
-                70, 180, 210,
-        
-                // right of middle rung
-                100, 70, 210,
-                100, 70, 210,
-                100, 70, 210,
-                100, 70, 210,
-                100, 70, 210,
-                100, 70, 210,
-        
-                // bottom of middle rung.
-                76, 210, 100,
-                76, 210, 100,
-                76, 210, 100,
-                76, 210, 100,
-                76, 210, 100,
-                76, 210, 100,
-        
-                // right of bottom
-                140, 210, 80,
-                140, 210, 80,
-                140, 210, 80,
-                140, 210, 80,
-                140, 210, 80,
-                140, 210, 80,
-        
-                // bottom
-                90, 130, 110,
-                90, 130, 110,
-                90, 130, 110,
-                90, 130, 110,
-                90, 130, 110,
-                90, 130, 110,
-        
-                // left side
-                160, 160, 220,
-                160, 160, 220,
-                160, 160, 220,
-                160, 160, 220,
-                160, 160, 220,
-                160, 160, 220,
-            ]
-        */
-        webGLVariables = init(vertexShaderSource, fragmentShaderSource, drawDimensions, objects.skull.position, objects.skull.color);
-        //funcao para transladar o objeto
-        translate('set', 0, 0, -300);
-        //converte o angulo pro seno e cosseno e coloca na variavel
-        //seno eh o x, cosseno eh o y
-        convertDegreesToRadians('set', 'x', 270);
-        convertDegreesToRadians('set', 'y', 0);
-        convertDegreesToRadians('set', 'z', 0);
-        //multiplica o x e o y fornecido pra escalar o objeto (nao multiplicar por 0)
-        scale(10, 10, 10);
-        requestAnimationFrame(drawScene);
+        webGLVariables = init(vertexShaderSource, fragmentShaderSource);
+        //requestAnimationFrame(drawScene)
     });
 }
 // -------INICIALIZACAO-------
-function init(vertexShaderSource, fragmentShaderSource, drawDimensions, positions, colors = []) {
+function init(vertexShaderSource, fragmentShaderSource) {
     //cria shaders
     let vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     let fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
@@ -236,18 +107,26 @@ function init(vertexShaderSource, fragmentShaderSource, drawDimensions, position
     let colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
     //pega as variaveis globais dos shaders
     let matrixLocation = gl.getUniformLocation(program, 'u_matrix'); //matriz de mudancas
-    //let colorLocation = gl.getUniformLocation(program, 'u_color') //cor
-    //cria um objeto vertex array pra tirar dados do buffer
-    let vao = gl.createVertexArray();
+    //cria um objeto vertex array para cada forma pra tirar dados do buffer
+    let vaoCube = gl.createVertexArray();
+    let vaoSkull = gl.createVertexArray();
+    let vaoBall = gl.createVertexArray();
+    let vaoObject = {
+        "cube": vaoCube,
+        "skull": vaoSkull,
+        "ball": vaoBall
+    };
     //conecta esse objeto no webgl
-    gl.bindVertexArray(vao);
-    setShape(positions, positionAttributeLocation, drawDimensions);
-    setColor(colors, colorAttributeLocation, drawDimensions);
+    /*gl.bindVertexArray(vaoCube)
+
+    setShape(positions, positionAttributeLocation, drawDimensions)
+
+    setColor(colors, colorAttributeLocation, drawDimensions)*/
     return {
         "program": program,
         "positionAttributeLocation": positionAttributeLocation,
         "colorAttributeLocation": colorAttributeLocation,
-        "vertexArrayObject": vao,
+        "vertexArrayObject": vaoObject,
         "matrixLocation": matrixLocation,
         //"colorUniformLocation" : colorLocation
     };
@@ -264,30 +143,101 @@ function drawScene() {
     gl.enable(gl.CULL_FACE);
     //qual programa usar
     gl.useProgram(webGLVariables.program);
-    //diz qual vertex array vai ser usado pra retirar informacoes do buffer
-    gl.bindVertexArray(webGLVariables.vertexArrayObject);
-    convertDegreesToRadians('add', 'z', 1);
+    //convertDegreesToRadians('add', 'z', 1)
     //usa as variaveis globais de translacao rotacao e escala
     //para criar as matrizes de modificacao de pontos
     //e multiplica elas entre si para retornar uma unica matriz
     //que contem todas as mudancas
-    let matrix = multiplyMatrices();
+    let cubeMatrix = multiplyMatrices(globalVariables.objects.cube.translation, globalVariables.objects.cube.rotation, globalVariables.objects.cube.scale);
+    let skullMatrix = multiplyMatrices(globalVariables.objects.skull.translation, globalVariables.objects.skull.rotation, globalVariables.objects.skull.scale);
+    let ballMatrix = multiplyMatrices(globalVariables.objects.ball.translation, globalVariables.objects.ball.rotation, globalVariables.objects.ball.scale);
+    // ------- CUBO -------
+    //diz qual vertex array vai ser usado pra retirar informacoes do buffer
+    gl.bindVertexArray(webGLVariables.vertexArrayObject.cube);
     //seta matriz de mudancas
-    gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, matrix);
+    gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, cubeMatrix);
     //desenha o que ta no array
     let primitiveType = gl.TRIANGLES;
     let offset = 0;
-    gl.drawArrays(primitiveType, offset, globalVariables.count);
+    gl.drawArrays(primitiveType, offset, globalVariables.objects.cube.count);
+    // ------- CAVEIRA -------
+    gl.bindVertexArray(webGLVariables.vertexArrayObject.skull);
+    gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, skullMatrix);
+    gl.drawArrays(primitiveType, offset, globalVariables.objects.skull.count);
+    // ------- BOLA -------
+    gl.bindVertexArray(webGLVariables.vertexArrayObject.ball);
+    gl.uniformMatrix4fv(webGLVariables.matrixLocation, false, ballMatrix);
+    gl.drawArrays(primitiveType, offset, globalVariables.objects.ball.count);
     //faz um loop, animando o desenho
     requestAnimationFrame(drawScene);
 }
 function loadShape(shape) {
-    if (shape == 'cube') {
-    }
-    else if (shape == 'skull') {
-    }
-    else if (shape == 'ball') {
-    }
+    return __awaiter(this, void 0, void 0, function* () {
+        if (shape == 'cube') {
+            if (!globalVariables.cubeLoaded) {
+                globalVariables.cubeLoaded = true;
+                globalVariables.vaoSelected = webGLVariables.vertexArrayObject.cube;
+                let cube = {
+                    position: [],
+                    color: []
+                };
+                cube = yield loadObjectFromFile('resources/models/cube/cube.obj');
+                globalVariables.objects.cube.position = cube.position;
+                globalVariables.objects.cube.color = cube.color;
+                globalVariables.objects.cube.count = cube.position.length / globalVariables.drawDimensions;
+                translate('set', 'cube', -150, 0, -300);
+                scale('cube', 100, 100, 100);
+                setShape(globalVariables.objects.cube.position, webGLVariables.positionAttributeLocation, globalVariables.drawDimensions, globalVariables.vaoSelected);
+                setColor(globalVariables.objects.cube.color, webGLVariables.colorAttributeLocation, globalVariables.drawDimensions, globalVariables.vaoSelected);
+            }
+            else {
+                globalVariables.vaoSelected = webGLVariables.vertexArrayObject.cube;
+            }
+        }
+        else if (shape == 'skull') {
+            if (!globalVariables.skullLoaded) {
+                globalVariables.skullLoaded = true;
+                globalVariables.vaoSelected = webGLVariables.vertexArrayObject.skull;
+                let skull = {
+                    position: [],
+                    color: []
+                };
+                skull = yield loadObjectFromFile('resources/models/skull/skull.obj');
+                globalVariables.objects.skull.position = skull.position;
+                globalVariables.objects.skull.color = skull.color;
+                globalVariables.objects.skull.count = skull.position.length / globalVariables.drawDimensions;
+                translate('set', 'skull', 150, 0, -300);
+                scale('skull', 10, 10, 10);
+                setShape(globalVariables.objects.skull.position, webGLVariables.positionAttributeLocation, globalVariables.drawDimensions, globalVariables.vaoSelected);
+                setColor(globalVariables.objects.skull.color, webGLVariables.colorAttributeLocation, globalVariables.drawDimensions, globalVariables.vaoSelected);
+            }
+            else {
+                globalVariables.vaoSelected = webGLVariables.vertexArrayObject.skull;
+            }
+        }
+        else if (shape == 'ball') {
+            if (!globalVariables.ballLoaded) {
+                globalVariables.ballLoaded = true;
+                globalVariables.vaoSelected = webGLVariables.vertexArrayObject.ball;
+                let ball = {
+                    position: [],
+                    color: []
+                };
+                ball = yield loadObjectFromFile('resources/models/ball/ball.obj');
+                globalVariables.objects.ball.position = ball.position;
+                globalVariables.objects.ball.color = ball.color;
+                globalVariables.objects.ball.count = ball.position.length / globalVariables.drawDimensions;
+                translate('set', 'ball', 15, 100, -300);
+                scale('ball', 100, 100, 100);
+                setShape(globalVariables.objects.ball.position, webGLVariables.positionAttributeLocation, globalVariables.drawDimensions, globalVariables.vaoSelected);
+                setColor(globalVariables.objects.ball.color, webGLVariables.colorAttributeLocation, globalVariables.drawDimensions, globalVariables.vaoSelected);
+            }
+            else {
+                globalVariables.vaoSelected = webGLVariables.vertexArrayObject.ball;
+            }
+        }
+        requestAnimationFrame(drawScene);
+    });
 }
 function loadObjectFromFile(path) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -378,7 +328,8 @@ function parseOBJ(text) {
         //normal: webglVertexData[2],
     };
 }
-function setShape(positions, positionAttributeLocation, drawDimensions) {
+function setShape(positions, positionAttributeLocation, drawDimensions, vao) {
+    gl.bindVertexArray(vao);
     //cria um buffer pro atributo pegar informacoes dele
     let positionBuffer = gl.createBuffer();
     //conecta o buffer com  a "variavel global" do webgl, conhecido como bind point
@@ -393,95 +344,162 @@ function setShape(positions, positionAttributeLocation, drawDimensions) {
     let offset = 0;
     gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
 }
-function setColor(color, colorAttributeLocation, drawDimensions) {
+function setColor(color, colorAttributeLocation, drawDimensions, vao) {
+    gl.bindVertexArray(vao);
     let colorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(color), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(colorAttributeLocation);
-    let sizeColor = drawDimensions;
-    let typeColor = gl.UNSIGNED_BYTE;
-    let normalizeColor = true;
-    let strideColor = 0;
-    let offsetColor = 0;
-    gl.vertexAttribPointer(colorAttributeLocation, sizeColor, typeColor, normalizeColor, strideColor, offsetColor);
+    let size = drawDimensions;
+    let type = gl.UNSIGNED_BYTE;
+    let normalize = true;
+    let stride = 0;
+    let offset = 0;
+    gl.vertexAttribPointer(colorAttributeLocation, size, type, normalize, stride, offset);
 }
 function updateFOV(degrees) {
     globalVariables.FOVRadians = degrees * Math.PI / 180;
 }
-function multiplyMatrices() {
+function multiplyMatrices(translation, rotation, scale) {
     let aspect = gl.canvas.width / gl.canvas.height;
     let zNear = 1;
     let zFar = 2000;
-    /*let left = 0
-    let right = gl.canvas.width
-    let bottom = gl.canvas.height
-    let top = 0
-    let near = 400
-    let far = -400
-
-    //let matrix = m4.projection(gl.canvas.width, gl.canvas.height, 400)
-    let matrix = m4.orthographic(left, right, bottom, top, near, far)*/
     let matrix = m4.perspective(globalVariables.FOVRadians, aspect, zNear, zFar);
-    matrix = m4.translate(matrix, globalVariables.translation[0], globalVariables.translation[1], globalVariables.translation[2]);
-    matrix = m4.xRotate(matrix, globalVariables.rotation[0]);
-    matrix = m4.yRotate(matrix, globalVariables.rotation[1]);
-    matrix = m4.zRotate(matrix, globalVariables.rotation[2]);
-    matrix = m4.scale(matrix, globalVariables.scale[0], globalVariables.scale[1], globalVariables.scale[2]);
+    matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
+    matrix = m4.xRotate(matrix, rotation[0]);
+    matrix = m4.yRotate(matrix, rotation[1]);
+    matrix = m4.zRotate(matrix, rotation[2]);
+    matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
     return matrix;
 }
-function translate(mode = 'set', x = 0, y = 0, z = 0) {
-    if (mode == 'set') {
-        globalVariables.translation[0] = x;
-        globalVariables.translation[1] = y;
-        globalVariables.translation[2] = z;
-    }
-    else if (mode == 'add') {
-        globalVariables.translation[0] += x;
-        globalVariables.translation[1] += y;
-        globalVariables.translation[2] += z;
-    }
-    else {
-        console.log('modo incorreto (mode deve ser set ou add)');
-    }
-}
-function convertDegreesToRadians(mode, axis, angle) {
-    //isso reseta angulos maiores que 360 pra menos de 360, nao sei se vai ser necessario
-    if (globalVariables.rotation[0] >= (360 * Math.PI / 180)) {
-        globalVariables.rotation[0] = globalVariables.rotation[0] - (360 * Math.PI / 180);
-    }
-    if (globalVariables.rotation[1] >= (360 * Math.PI / 180)) {
-        globalVariables.rotation[1] = globalVariables.rotation[1] - (360 * Math.PI / 180);
-    }
-    if (globalVariables.rotation[2] >= (360 * Math.PI / 180)) {
-        globalVariables.rotation[2] = globalVariables.rotation[2] - (360 * Math.PI / 180);
-    }
-    if (mode == 'set') {
-        if (axis == 'x') {
-            globalVariables.rotation[0] = angle * Math.PI / 180;
+function translate(mode = 'set', shape, x = 0, y = 0, z = 0) {
+    if (shape == 'cube') {
+        if (mode == 'set') {
+            globalVariables.objects.cube.translation[0] = x;
+            globalVariables.objects.cube.translation[1] = y;
+            globalVariables.objects.cube.translation[2] = z;
         }
-        else if (axis == 'y') {
-            globalVariables.rotation[1] = angle * Math.PI / 180;
-        }
-        else if (axis == 'z') {
-            globalVariables.rotation[2] = angle * Math.PI / 180;
+        else if (mode == 'add') {
+            globalVariables.objects.cube.translation[0] += x;
+            globalVariables.objects.cube.translation[1] += y;
+            globalVariables.objects.cube.translation[2] += z;
         }
     }
-    else if (mode == 'add') {
-        if (axis == 'x') {
-            globalVariables.rotation[0] += angle * Math.PI / 180;
+    else if (shape == 'skull') {
+        if (mode == 'set') {
+            globalVariables.objects.skull.translation[0] = x;
+            globalVariables.objects.skull.translation[1] = y;
+            globalVariables.objects.skull.translation[2] = z;
         }
-        else if (axis == 'y') {
-            globalVariables.rotation[1] += angle * Math.PI / 180;
+        else if (mode == 'add') {
+            globalVariables.objects.skull.translation[0] += x;
+            globalVariables.objects.skull.translation[1] += y;
+            globalVariables.objects.skull.translation[2] += z;
         }
-        else if (axis == 'z') {
-            globalVariables.rotation[2] += angle * Math.PI / 180;
+    }
+    else if (shape == 'ball') {
+        if (mode == 'set') {
+            globalVariables.objects.ball.translation[0] = x;
+            globalVariables.objects.ball.translation[1] = y;
+            globalVariables.objects.ball.translation[2] = z;
+        }
+        else if (mode == 'add') {
+            globalVariables.objects.ball.translation[0] += x;
+            globalVariables.objects.ball.translation[1] += y;
+            globalVariables.objects.ball.translation[2] += z;
         }
     }
 }
-function scale(x, y, z) {
-    globalVariables.scale[0] = x;
-    globalVariables.scale[1] = y;
-    globalVariables.scale[2] = z;
+function convertDegreesToRadians(mode, shape, axis, angle) {
+    if (shape == 'cube') {
+        if (mode == 'set') {
+            if (axis == 'x') {
+                globalVariables.objects.cube.rotation[0] = angle * Math.PI / 180;
+            }
+            else if (axis == 'y') {
+                globalVariables.objects.cube.rotation[1] = angle * Math.PI / 180;
+            }
+            else if (axis == 'z') {
+                globalVariables.objects.cube.rotation[2] = angle * Math.PI / 180;
+            }
+        }
+        else if (mode == 'add') {
+            if (axis == 'x') {
+                globalVariables.objects.cube.rotation[0] += angle * Math.PI / 180;
+            }
+            else if (axis == 'y') {
+                globalVariables.objects.cube.rotation[1] += angle * Math.PI / 180;
+            }
+            else if (axis == 'z') {
+                globalVariables.objects.cube.rotation[2] += angle * Math.PI / 180;
+            }
+        }
+    }
+    else if (shape == 'skull') {
+        if (mode == 'set') {
+            if (axis == 'x') {
+                globalVariables.objects.skull.rotation[0] = angle * Math.PI / 180;
+            }
+            else if (axis == 'y') {
+                globalVariables.objects.skull.rotation[1] = angle * Math.PI / 180;
+            }
+            else if (axis == 'z') {
+                globalVariables.objects.skull.rotation[2] = angle * Math.PI / 180;
+            }
+        }
+        else if (mode == 'add') {
+            if (axis == 'x') {
+                globalVariables.objects.skull.rotation[0] += angle * Math.PI / 180;
+            }
+            else if (axis == 'y') {
+                globalVariables.objects.skull.rotation[1] += angle * Math.PI / 180;
+            }
+            else if (axis == 'z') {
+                globalVariables.objects.skull.rotation[2] += angle * Math.PI / 180;
+            }
+        }
+    }
+    else if (shape == 'ball') {
+        if (mode == 'set') {
+            if (axis == 'x') {
+                globalVariables.objects.ball.rotation[0] = angle * Math.PI / 180;
+            }
+            else if (axis == 'y') {
+                globalVariables.objects.ball.rotation[1] = angle * Math.PI / 180;
+            }
+            else if (axis == 'z') {
+                globalVariables.objects.ball.rotation[2] = angle * Math.PI / 180;
+            }
+        }
+        else if (mode == 'add') {
+            if (axis == 'x') {
+                globalVariables.objects.ball.rotation[0] += angle * Math.PI / 180;
+            }
+            else if (axis == 'y') {
+                globalVariables.objects.ball.rotation[1] += angle * Math.PI / 180;
+            }
+            else if (axis == 'z') {
+                globalVariables.objects.ball.rotation[2] += angle * Math.PI / 180;
+            }
+        }
+    }
+}
+function scale(shape, x, y, z) {
+    if (shape == 'cube') {
+        globalVariables.objects.cube.scale[0] = x;
+        globalVariables.objects.cube.scale[1] = y;
+        globalVariables.objects.cube.scale[2] = z;
+    }
+    else if (shape == 'skull') {
+        globalVariables.objects.skull.scale[0] = x;
+        globalVariables.objects.skull.scale[1] = y;
+        globalVariables.objects.skull.scale[2] = z;
+    }
+    else if (shape == 'ball') {
+        globalVariables.objects.ball.scale[0] = x;
+        globalVariables.objects.ball.scale[1] = y;
+        globalVariables.objects.ball.scale[2] = z;
+    }
 }
 //objeto com funcoes auxiliares pra matrizes 3d
 var m4 = {
