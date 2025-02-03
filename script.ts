@@ -457,6 +457,34 @@ function multiplyMatrices(translation: Array<number>, rotation: Array<number>, s
     return matrix
 }
 
+function applyChanges() {
+    let xTrans = parseInt((<HTMLInputElement>document.getElementById('xTrans')).value)
+    let yTrans = parseInt((<HTMLInputElement>document.getElementById('yTrans')).value)
+    let zTrans = parseInt((<HTMLInputElement>document.getElementById('zTrans')).value)
+    let xRotate = parseInt((<HTMLInputElement>document.getElementById('xRotate')).value)
+    let yRotate = parseInt((<HTMLInputElement>document.getElementById('yRotate')).value)
+    let zRotate = parseInt((<HTMLInputElement>document.getElementById('zRotate')).value)
+    let xScale = parseInt((<HTMLInputElement>document.getElementById('xScale')).value)
+    let yScale = parseInt((<HTMLInputElement>document.getElementById('yScale')).value)
+    let zScale = parseInt((<HTMLInputElement>document.getElementById('zScale')).value)
+
+    let selectedVAO: string = 'cube'
+
+    if (globalVariables.vaoSelected == webGLVariables.vertexArrayObject.cube) {
+        selectedVAO = 'cube'
+    } else if (globalVariables.vaoSelected == webGLVariables.vertexArrayObject.skull) {
+        selectedVAO = 'skull'
+    } else if (globalVariables.vaoSelected == webGLVariables.vertexArrayObject.ball) {
+        selectedVAO = 'ball'
+    }
+
+    translate('set', selectedVAO, xTrans, yTrans, zTrans)
+    convertDegreesToRadians('set', selectedVAO, 'x', xRotate)
+    convertDegreesToRadians('set', selectedVAO, 'y', yRotate)
+    convertDegreesToRadians('set', selectedVAO, 'z', zRotate)
+    scale(selectedVAO, xScale, yScale, zScale)
+}
+
 function translate(mode: string = 'set', shape: string, x: number = 0, y: number = 0, z: number = 0) {
     if (shape == 'cube') {
         if (mode == 'set') {

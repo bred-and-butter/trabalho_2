@@ -12,6 +12,37 @@
     <button onclick="loadShape('cube')">Cubo</button>
     <button onclick="loadShape('skull')">Caveira</button>
     <button onclick="loadShape('ball')">Bola</button>
+    <div>
+        <div>
+            <b>Translacao</b>
+            <b>X</b>
+            <input type="number" id="xTrans" value="0">
+            <b>Y</b>
+            <input type="number" id="yTrans" value="0">
+            <b>Z</b>
+            <input type="number" id="zTrans" value="0">
+        </div>
+        <div>
+            <b>Rotacao</b>
+            <b>X</b>
+            <input type="number" id="xRotate" value="0">
+            <b>Y</b>
+            <input type="number" id="yRotate" value="0">
+            <b>Z</b>
+            <input type="number" id="zRotate" value="0">
+        </div>
+        <div>
+            <b>Escala</b>
+            <b>X</b>
+            <input type="number" id="xScale" value="1">
+            <b>Y</b>
+            <input type="number" id="yScale" value="1">
+            <b>Z</b>
+            <input type="number" id="zScale" value="1">
+        </div>
+        <button onclick="applyChanges()">Aplicar Mudanças</button>
+    </div>
+
     <script src="script.js"></script>
 </body>
 
